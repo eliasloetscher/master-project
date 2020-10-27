@@ -12,3 +12,15 @@ class Parameters:
     # Keysight VISA address
     KEYSIGHT_VISA_ADDRESS = "USB0::0x0957::0xD518::MY54321380::0::INSTR"
 
+    # Labjack serial number
+    LABJACK_SERIAL_NUMBER = "470019966"
+
+    # Labjack connection type
+    LABJACK_CONNECTION = "USB"
+
+    # Labjack model
+    LABJACK_MODEL = "T7"
+
+    # Humidity Sensor Htm2500lf used analog input port on labjack
+    HTM2500LF_LJ_ANALOG_IN = "AIN0"
+

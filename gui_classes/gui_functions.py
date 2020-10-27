@@ -1,4 +1,4 @@
-from mviss_package.parameters import Parameters as Params
+from mviss_module.parameters import Parameters as Params
 
 
 class GUIFunctions:

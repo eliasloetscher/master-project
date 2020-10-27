@@ -1,5 +1,5 @@
 import pyvisa as visa
-from mviss_package.parameters import Parameters
+from mviss_module.parameters import Parameters
 from pyvisa import constants
 
 
@@ -59,10 +59,28 @@ class ElectrometerControl:
         if voltage < 0 or voltage > 1000:
             raise ValueError
 
-        if int(self.get_interlock_state()) == 1 and voltage > 21 :
+        if not int(self.get_interlock_state()) and voltage > 21:
             raise InterlockError
 
         query = str(':SOUR:VOLT ' + str(voltage))
+        self.session.write(query)
+
+    def enable_source_output(self):
+        """
+        Enables the voltage source.
+        :return: None
+        """
+
+        query = str(':OUTP:STAT ON')
+        self.session.write(query)
+
+    def disable_source_output(self):
+        """
+        Enables the voltage source.
+        :return: None
+        """
+
+        query = str(':OUTP:STAT OFF')
         self.session.write(query)
 
     def get_current(self):
@@ -79,10 +97,16 @@ class ElectrometerControl:
     def get_interlock_state(self):
         """
         Reads the interlock state and returns if open or closed
-        :return: 0 (close) or 1 (open)
+        :return: True (closed -> HV enabled) or False (open -> HV disabled)
         """
         self.session.write('SYST:INT:TRIP?')
-        return self.session.read()
+        interlock_state = self.session.read()
+        if int(interlock_state) == 0:
+            return True
+        elif int(interlock_state) == 1:
+            return False
+        else:
+            raise InterlockError
 
     def close_connection(self):
         # Close the connection to the instrument
