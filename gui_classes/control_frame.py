@@ -17,9 +17,9 @@ class ControlFrame:
 
         v = tk.IntVar()
         rad_label = tk.Label(self.control_frame, text="Choose sub frame")
-        rad1 = tk.Radiobutton(self.control_frame, text="Sub Frame 1", variable=v, value=1,
+        rad1 = tk.Radiobutton(self.control_frame, text="Control Frame", variable=v, value=1,
                               command=gui_function_object.show_sub_frame1)
-        rad2 = tk.Radiobutton(self.control_frame, text="Sub Frame 2", variable=v, value=2,
+        rad2 = tk.Radiobutton(self.control_frame, text="Measurement Frame", variable=v, value=2,
                               command=gui_function_object.show_sub_frame2)
         rad3 = tk.Radiobutton(self.control_frame, text="Sub Frame 3", variable=v, value=3,
                               command=gui_function_object.show_sub_frame3)
@@ -27,4 +27,4 @@ class ControlFrame:
         rad_label.grid(row=2, pady=10, padx=10, columnspan=4, sticky="W")
         rad1.grid(row=3, column=0, padx=10, sticky="W")
         rad2.grid(row=3, column=1, padx=15, sticky="W")
-        rad3.grid(row=3, column=2, padx=15, sticky="W")
+        # rad3.grid(row=3, column=2, padx=15, sticky="W")

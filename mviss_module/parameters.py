@@ -21,6 +21,20 @@ class Parameters:
     # Labjack model
     LABJACK_MODEL = "T7"
 
-    # Humidity Sensor Htm2500lf used analog input port on labjack
-    HTM2500LF_LJ_ANALOG_IN = "AIN0"
+    # Labjack analog input port for humidity sensor
+    LJ_ANALOG_IN_HUMIDITY_SENSOR = "AIN0"
+
+    # Labjack digital output port for hv_enable (part of safety circuit)
+    LJ_DIGITAL_OUT_SAFETY_RELAY = "FIO0"
+
+    # Labjack digital output port for gnd_relay
+    LJ_DIGITAL_OUT_GND_RELAY = "FIO1"
+
+    # Labjack digital output port for hv_relay
+    LJ_DIGITAL_OUT_HV_RELAY = "FIO2"
+
+
+
+
+
 

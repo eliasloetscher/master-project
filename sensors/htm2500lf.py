@@ -17,7 +17,7 @@ class Htm2500lf:
         :return:
         """
         # Read analog IN where the sensor is connected
-        result = self.lj_connection.read_analog(Parameters.HTM2500LF_LJ_ANALOG_IN)
+        result = self.lj_connection.read_analog(Parameters.LJ_ANALOG_IN_HUMIDITY_SENSOR)
 
         # Convert from V to RH in % with linear equation according to datasheet
         convert = 0.0375*result*1000 - 37.7
