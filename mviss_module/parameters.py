@@ -21,6 +21,9 @@ class Parameters:
     # Labjack model
     LABJACK_MODEL = "T7"
 
+    # Location for logfiles
+    LOCATION_LOG_FILES = "C:/Users/eliasl/Documents/logfiles/"
+
     # Labjack analog input port for humidity sensor
     LJ_ANALOG_IN_HUMIDITY_SENSOR = "AIN0"
 
