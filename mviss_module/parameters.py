@@ -36,6 +36,12 @@ class Parameters:
     # Labjack digital output port for hv_relay
     LJ_DIGITAL_OUT_HV_RELAY = "FIO2"
 
+    # Labjack Tick DAC connection for I2C Communication. Lower Pin is SCL, Higher Pin is SDA. Corresponds to FIO Pins.
+    LJ_TICK_DAC_DOUT_SCL = "6"
+    LJ_TICK_DAC_DOUT_SDA = "7"
+
+
+
 
 
 

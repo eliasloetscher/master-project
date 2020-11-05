@@ -17,8 +17,20 @@ while True:
     time.sleep(3)
 """
 
+"""
 while True:
     humidity = hum_sensor.read_humidity()
     print("Humidity: ", humidity)
     time.sleep(2)
+"""
 
+connection.ljtick_dac_set_analog_out("A", 0.0)
+connection.ljtick_dac_set_analog_out("B", 0.0)
+
+"""
+i = 0.0
+while True:
+    connection.ljtick_dac_set_analog_out("B", i)
+    i += 1
+    time.sleep(3)
+"""

@@ -96,6 +96,38 @@ class LabjackConnection:
         except (TypeError, LJMError):
             pass
 
+    def ljtick_dac_set_analog_out(self, port, voltage):
+        """
+        Writes the analog output voltage to the LJTick DAC 0 to 10 V.
+        :param port: "A" or "B", type <str>
+        :param voltage: output voltage 0-10V, type <float>
+        :return: Labjack I2C acknowledgement (Acked if non-zero value)
+        :exception TypeError: if port is not string or voltage is not float
+        :exception ValueError: if port is invalid or voltage is out of range
+        :exception LJMError: An error was returned from the LJM library call
+        """
+
+        if not isinstance(port, str) or not isinstance(voltage, float):
+            raise TypeError
+
+        if voltage < 0 or voltage > 10:
+            raise ValueError
+
+        # Generate write statement. Even TDAC# is DACA, odd TDAC# is DACB
+        # Labjack doc: For instance, if LJTick-DAC is connected to FIO2/FIO3 block on main device:
+        # TDAC2 corresponds with DACA, and TDAC3 corresponds with DACB.
+        if port == "A":
+            write = str("TDAC" + str(Parameters.LJ_TICK_DAC_DOUT_SCL))
+        elif port == "B":
+            write = str("TDAC" + str(Parameters.LJ_TICK_DAC_DOUT_SDA))
+        else:
+            raise ValueError
+
+        try:
+            ljm.eWriteName(self.connection, write, voltage)
+        except (TypeError, LJMError):
+            pass
+
     def close_connection(self):
         """
         Closes the labjack connection
