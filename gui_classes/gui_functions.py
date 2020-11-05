@@ -26,9 +26,9 @@ class GUIFunctions:
         self.sub_frame2.grid_forget()
         self.sub_frame3.grid(row=4, padx=10, columnspan=4, sticky="W")
 
-    def update_measurement_section(self, measurement_frame, humidity_sensor):
+    def update_measurement_section(self, measurement_frame, humidity_sensor, hvamp):
         # Get all sensor values
-        values = measure.measure_all_values(humidity_sensor)
+        values = measure.measure_all_values(humidity_sensor, hvamp)
 
         # Update all gui labels
         measurement_frame.volt1.set(round(float(values[0]), 2))

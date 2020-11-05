@@ -9,6 +9,7 @@ from mviss_module.labjack_connection import LabjackConnection
 from mviss_module.gpio_functions import GPIOFunctions
 from sensors.htm2500lf import Htm2500lf
 from mviss_module.parameters import Parameters
+from devices.hvamp import HVAmp
 import sys
 from labjack.ljm import LJMError
 
@@ -32,6 +33,9 @@ lj_gpio = GPIOFunctions()
 # Setup humidity sensor
 humidity_sensor = Htm2500lf(lj_connection)
 
+# Setup high voltage amplifier
+hvamp = HVAmp(lj_connection)
+
 # Initialize Tkinter instance
 root = tk.Tk()
 root.title("MVISS")
@@ -46,7 +50,7 @@ control_frame = ControlFrame(root)
 sensor_frame = SensorFrame(root)
 
 # Initialize sub frames
-sf1 = SubFrame1(control_frame.control_frame, lj_connection, lj_gpio)
+sf1 = SubFrame1(control_frame.control_frame, lj_connection, lj_gpio, hvamp)
 sf2 = SubFrame2(control_frame.control_frame)
 sf3 = SubFrame3(control_frame.control_frame)
 
@@ -57,7 +61,7 @@ gui_functions_object = GUIFunctions(sf1.sub_frame1, sf2.sub_frame2, sf3.sub_fram
 control_frame.set_up(gui_functions_object)
 
 # Show sensor values
-sensor_frame.show_measurements(gui_functions_object, humidity_sensor)
+sensor_frame.show_measurements(gui_functions_object, humidity_sensor, hvamp)
 
 # Execute GUI
 root.mainloop()

@@ -2,11 +2,12 @@ import tkinter as tk
 
 
 class SubFrame1:
-    def __init__(self, parent_frame, labjack_connection, labjack_gpio):
+    def __init__(self, parent_frame, labjack_connection, labjack_gpio, hvamp):
         # Initialize vars
         self.parent_frame = parent_frame  # this is the root
         self.lj_connection = labjack_connection
         self.lj_gpio = labjack_gpio
+        self.hvamp = hvamp
 
         # Setup frame properties
         self.sub_frame1 = tk.Frame(parent_frame, width=600, height=600)
@@ -54,4 +55,10 @@ class SubFrame1:
         self.hv_relay_state.grid(row=5, columnspan=4, column=1, sticky="W", pady=(0, 0))
         self.gnd_relay_state.grid(row=6, columnspan=4, column=1, sticky="W", pady=(10, 0))
 
-        self.error_message.grid(row=7, columnspan=5, sticky="W", pady=(20, 0))
+        tk.Label(self.sub_frame1, text="Set voltage: ").grid(row=7, sticky="W", pady=15)
+        voltage = tk.Entry(self.sub_frame1, width=12)
+        voltage.grid(row=7, column=1, sticky="W", pady=15, columnspan=4)
+        # tk.Label(self.sub_frame1, text="V").grid(row=7, column=2, sticky="W", padx=(0, 10), pady=15)
+        tk.Button(self.sub_frame1, text="Apply", command=lambda: self.hvamp.set_voltage(int(voltage.get()))).grid(row=7, column=3, sticky="W", padx=5, pady=15, columnspan=4)
+
+        self.error_message.grid(row=8, columnspan=5, sticky="W", pady=(20, 0))

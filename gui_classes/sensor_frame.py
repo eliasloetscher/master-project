@@ -27,12 +27,12 @@ class SensorFrame:
 
         tk.Label(self.measurement_frame, text="Voltage", font="Helvetica 12 bold").grid(padx=10, row=1, pady=(20, 5),
                                                                                         sticky="W")
-        tk.Label(self.measurement_frame, text="Sensor 1").grid(padx=10, row=2, pady=5, sticky="W")
+        tk.Label(self.measurement_frame, text="HVAmp out").grid(padx=10, row=2, pady=5, sticky="W")
 
 
         tk.Label(self.measurement_frame, text="Current", font="Helvetica 12 bold").grid(padx=10, row=3, pady=(20, 5),
                                                                                         sticky="W")
-        tk.Label(self.measurement_frame, text="Sensor 1").grid(padx=10, row=4, pady=5, sticky="W")
+        tk.Label(self.measurement_frame, text="HVAmp out").grid(padx=10, row=4, pady=5, sticky="W")
 
         tk.Label(self.measurement_frame, text="Temperature", font="Helvetica 12 bold").grid(padx=10, row=5, pady=20,
                                                                                             sticky="W")
@@ -52,7 +52,7 @@ class SensorFrame:
         self.temp2.set("n/a")
         self.humidity1.set("n/a")
 
-    def show_measurements(self, gui_functions_object, humidity_sensor):
+    def show_measurements(self, gui_functions_object, humidity_sensor, hvamp):
 
         tk.Label(self.measurement_frame, textvariable=self.volt1).grid(row=2, column=1, pady=5, sticky="W")
 
@@ -64,5 +64,5 @@ class SensorFrame:
         tk.Label(self.measurement_frame, textvariable=self.humidity1).grid(row=9, column=1, pady=5, sticky="W")
 
         tk.Button(self.measurement_frame, text="Get sensor values",
-                  command=lambda: gui_functions_object.update_measurement_section(self, humidity_sensor)).grid(
+                  command=lambda: gui_functions_object.update_measurement_section(self, humidity_sensor, hvamp)).grid(
             row=10, padx=10, pady=20, sticky="W", columnspan=2)

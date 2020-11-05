@@ -3,6 +3,7 @@
 import time
 from mviss_module.labjack_connection import LabjackConnection
 from sensors.htm2500lf import Htm2500lf
+from devices.hvamp import HVAmp
 
 connection = LabjackConnection()
 hum_sensor = Htm2500lf(connection)
@@ -24,8 +25,8 @@ while True:
     time.sleep(2)
 """
 
-connection.ljtick_dac_set_analog_out("A", 0.0)
-connection.ljtick_dac_set_analog_out("B", 0.0)
+hva = HVAmp(connection)
+hva.set_voltage(1000)
 
 """
 i = 0.0
