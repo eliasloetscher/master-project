@@ -40,6 +40,15 @@ class Parameters:
     # Labjack digital output port for hv_relay
     LJ_DIGITAL_OUT_HV_RELAY = "FIO2"
 
+    # Labjack digital output port for signal lamps
+    LJ_DIGITAL_OUT_SIGNAL_LAMP = "FIO3"
+
+    # Labjack digital input port for Pilz S1 state
+    LJ_DIGITAL_IN_PILZ_S1 = "FIO4"
+
+    # Labjack digital input port for Pilz S2 state
+    LJ_DIGITAL_IN_PILZ_S2 = "FIO5"
+
     # Labjack Tick DAC connection for I2C Communication. Lower Pin is SCL, Higher Pin is SDA. Corresponds to FIO Pins.
     LJ_TICK_DAC_DOUT_SCL = "6"
     LJ_TICK_DAC_DOUT_SDA = "7"
@@ -47,6 +56,7 @@ class Parameters:
     # Labjack tick dac analog out channels for hvamp
     LJ_ANALOG_OUT_HVA_REF = "A"
     LJ_ANALOG_OUT_HVA_CTRL = "B"
+
 
 
 

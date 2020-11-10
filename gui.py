@@ -13,6 +13,27 @@ from devices.hvamp import HVAmp
 import sys
 from labjack.ljm import LJMError
 
+
+# function for safety circuit
+def check_safety_circuit(connection, lj_gpio):
+    state_s1 = connection.read_digital(Parameters.LJ_DIGITAL_IN_PILZ_S1)
+    state_s2 = connection.read_digital(Parameters.LJ_DIGITAL_IN_PILZ_S2)
+    state_safety_relay = lj_gpio.get_safety_relay_state()
+
+    if Parameters.DEBUG:
+        print("State S1: ", state_s1)
+        print("State S2: ", state_s2)
+        print("State safety relay: ", state_safety_relay)
+
+    # Note: if state is HIGH, switch is closed!
+    if state_s1 == "HIGH" and state_s2 == "HIGH" and state_safety_relay == "ON":
+        connection.write_digital(Parameters.LJ_DIGITAL_OUT_SIGNAL_LAMP, "LOW")
+    else:
+        connection.write_digital(Parameters.LJ_DIGITAL_OUT_SIGNAL_LAMP, "HIGH")
+
+    root.after(1000, lambda: check_safety_circuit(connection, lj_gpio))
+
+
 # Setup labjack connection
 lj_connection = LabjackConnection()
 
@@ -40,6 +61,9 @@ hvamp = HVAmp(lj_connection)
 root = tk.Tk()
 root.title("MVISS")
 root.option_add("*Font", "TkDefaultFont 12")
+
+# start safety circuit
+root.after(0, lambda: check_safety_circuit(lj_connection, lj_gpio))
 
 # GUI Header
 gui_title = tk.Label(root, text="Resistivity Measurement Test Setup", font='Helvetica 18 bold')

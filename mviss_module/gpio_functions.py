@@ -71,3 +71,6 @@ class GPIOFunctions:
             state_label.configure(text="OFF", fg="green")
         else:
             raise TypeError
+
+    def get_safety_relay_state(self):
+        return self.safety_state
