@@ -10,6 +10,7 @@ from mviss_module.gpio_functions import GPIOFunctions
 from sensors.htm2500lf import Htm2500lf
 from mviss_module.parameters import Parameters
 from devices.hvamp import HVAmp
+from keysight.electrometer_control import ElectrometerControl
 import sys
 from labjack.ljm import LJMError
 
@@ -20,10 +21,10 @@ def check_safety_circuit(connection, lj_gpio):
     state_s2 = connection.read_digital(Parameters.LJ_DIGITAL_IN_PILZ_S2)
     state_safety_relay = lj_gpio.get_safety_relay_state()
 
-    if Parameters.DEBUG:
-        print("State S1: ", state_s1)
-        print("State S2: ", state_s2)
-        print("State safety relay: ", state_safety_relay)
+    # if Parameters.DEBUG:
+        # print("State S1: ", state_s1)
+        # print("State S2: ", state_s2)
+        # print("State safety relay: ", state_safety_relay)
 
     # Note: if state is HIGH, switch is closed!
     if state_s1 == "HIGH" and state_s2 == "HIGH" and state_safety_relay == "ON":
@@ -57,6 +58,9 @@ humidity_sensor = Htm2500lf(lj_connection)
 # Setup high voltage amplifier
 hvamp = HVAmp(lj_connection)
 
+# Setup electrometer
+electrometer = ElectrometerControl()
+
 # Initialize Tkinter instance
 root = tk.Tk()
 root.title("MVISS")
@@ -75,7 +79,7 @@ sensor_frame = SensorFrame(root)
 
 # Initialize sub frames
 sf1 = SubFrame1(control_frame.control_frame, lj_connection, lj_gpio, hvamp)
-sf2 = SubFrame2(control_frame.control_frame)
+sf2 = SubFrame2(control_frame.control_frame, electrometer)
 sf3 = SubFrame3(control_frame.control_frame)
 
 # Initialize gui functions object
@@ -84,8 +88,16 @@ gui_functions_object = GUIFunctions(sf1.sub_frame1, sf2.sub_frame2, sf3.sub_fram
 # Set up ControlFrame
 control_frame.set_up(gui_functions_object)
 
+# start plot
+sf2.start_plotting(root, gui_functions_object, electrometer)
+
 # Show sensor values
 sensor_frame.show_measurements(gui_functions_object, humidity_sensor, hvamp)
+
+# Setup plots
+
+# Start plot frame
+sf2.show_measurements(gui_functions_object, humidity_sensor, electrometer, hvamp)
 
 # Execute GUI
 root.mainloop()

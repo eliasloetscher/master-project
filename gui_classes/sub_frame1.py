@@ -4,13 +4,13 @@ import tkinter as tk
 class SubFrame1:
     def __init__(self, parent_frame, labjack_connection, labjack_gpio, hvamp):
         # Initialize vars
-        self.parent_frame = parent_frame  # this is the root
+        self.parent_frame = parent_frame
         self.lj_connection = labjack_connection
         self.lj_gpio = labjack_gpio
         self.hvamp = hvamp
 
         # Setup frame properties
-        self.sub_frame1 = tk.Frame(parent_frame, width=600, height=600)
+        self.sub_frame1 = tk.Frame(parent_frame, width=700, height=800)
         self.sub_frame1.grid_propagate(False)
         self.sub_frame1.grid(row=3, padx=10, columnspan=4, sticky="W")
         self.sub_frame1.grid_forget()

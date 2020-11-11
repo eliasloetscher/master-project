@@ -6,7 +6,7 @@ import tkinter.messagebox as messagebox
 class ControlFrame:
     def __init__(self, master):
         self.master = master  # this is the root
-        self.control_frame = tk.Frame(self.master, width=600, height=600, highlightbackground="black",
+        self.control_frame = tk.Frame(self.master, width=700, height=800, highlightbackground="black",
                                       highlightthickness=1)
         self.control_frame.grid(row=1, padx=20, pady=(0, 20))
         self.control_frame.grid_propagate(False)  # Avoid frame shrinking to the size of the included elements

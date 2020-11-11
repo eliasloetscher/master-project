@@ -7,7 +7,7 @@ import tkinter.messagebox as messagebox
 class SensorFrame:
     def __init__(self, master):
         self.master = master  # this is the root
-        self.measurement_frame = tk.Frame(self.master, width=400, height=600, highlightbackground="black",
+        self.measurement_frame = tk.Frame(self.master, width=400, height=800, highlightbackground="black",
                                           highlightthickness=1)
         self.measurement_frame.grid(row=1, column=1, padx=20, pady=(0, 20))
         self.measurement_frame.grid_propagate(False)  # Avoid frame shrinking to the size of the included elements

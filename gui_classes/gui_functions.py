@@ -11,6 +11,8 @@ class GUIFunctions:
         self.sub_frame3 = sub_frame3
         self.debug = Parameters.DEBUG
 
+        self.datapoints = []
+
     def show_sub_frame1(self):
         self.sub_frame1.grid(row=4, padx=10, columnspan=4, sticky="W")
         self.sub_frame2.grid_forget()
@@ -39,3 +41,32 @@ class GUIFunctions:
 
         if self.debug:
             print("All gui measurement labels updated with function update_measurement_section")
+
+    def update_current_plot(self, plot_frame, electrometer, ax, graph):
+
+        if len(self.datapoints) >= 50:
+            # delete first element from list
+            self.datapoints = self.datapoints[1:len(self.datapoints)]
+
+        # Get electrometer value
+        value = measure.measure_current(electrometer)
+
+        # Add to datapoints list
+        self.datapoints.append(value)
+
+        if Parameters.DEBUG:
+            print(self.datapoints)
+            print(len(self.datapoints))
+
+        ax.cla()
+        ax.grid()
+        ax.plot(range(len(self.datapoints)), self.datapoints, marker='o', color='orange')
+        graph.draw()
+
+        if self.debug:
+            print("Plot updated")
+
+    def start_auto_update_current_plot(self, root_instance, plot_frame, electrometer, hvamp):
+        self.update_current_plot(plot_frame, electrometer, hvamp)
+        root_instance.after(500, lambda: self.start_auto_update_current_plot(root_instance, plot_frame, electrometer, hvamp))
+

@@ -1,7 +1,7 @@
 import pyvisa as visa
 from mviss_module.parameters import Parameters
 from pyvisa import constants
-
+from pyvisa import VisaIOError
 
 class InterlockError(Exception):
     """ Exception raised when an action is not possible due to open or closed interlock
@@ -76,16 +76,39 @@ class ElectrometerControl:
 
     def disable_source_output(self):
         """
-        Enables the voltage source.
+        Disables the voltage source.
         :return: None
         """
 
         query = str(':OUTP:STAT OFF')
         self.session.write(query)
 
+    def enable_current_input(self):
+        """
+        Enables the amperemeter input
+        :return: None
+        """
+        query = str('INP:STAT ON')
+        self.session.write(query)
+
+    def disable_current_input(self):
+        """
+        Disables the amperemeter input
+        :return: None
+        """
+        query = str('INP:STAT OFF')
+        self.session.write(query)
+        print("Disbled ASDFASDFASDFNASJKDFB")
+
     def get_current(self):
         self.session.write('MEAS:CURR:DC?')
-        return self.session.read()
+        try:
+            result = self.session.read()
+        except VisaIOError:
+            print("ERROR WHILE READING CURRENT. VisaIOError in function electrometer_control.get_current()")
+            result = 0
+
+        return result
 
     def get_temperature(self):
         """
