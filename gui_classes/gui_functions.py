@@ -5,10 +5,10 @@ from labjack.ljm import LJMError
 
 class GUIFunctions:
 
-    def __init__(self, sub_frame1, sub_frame2, sub_frame3):
-        self.sub_frame1 = sub_frame1
-        self.sub_frame2 = sub_frame2
-        self.sub_frame3 = sub_frame3
+    def __init__(self):
+        # self.sub_frame1 = sub_frame1
+        # self.sub_frame2 = sub_frame2
+        # self.sub_frame3 = sub_frame3
         self.debug = Parameters.DEBUG
 
         self.datapoints = []

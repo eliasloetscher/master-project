@@ -1,10 +1,17 @@
 import tkinter as tk
-from gui_classes.sensor_frame import SensorFrame
+
+from gui_classes.safety_circuit_frame import SafetyCircuitFrame
 from gui_classes.control_frame import ControlFrame
+from gui_classes.devices_frame import DevicesFrame
+from gui_classes.measurement_frame import MeasurementFrame
+from gui_classes.recording_frame import RecordingFrame
+
 from gui_classes.gui_functions import GUIFunctions
+
 from gui_classes.sub_frame1 import SubFrame1
 from gui_classes.sub_frame2 import SubFrame2
 from gui_classes.sub_frame3 import SubFrame3
+
 from mviss_module.labjack_connection import LabjackConnection
 from mviss_module.gpio_functions import GPIOFunctions
 from sensors.htm2500lf import Htm2500lf
@@ -65,6 +72,7 @@ electrometer = ElectrometerControl()
 root = tk.Tk()
 root.title("MVISS")
 root.option_add("*Font", "TkDefaultFont 12")
+# root.option_add("*Sticky", "W")
 
 # start safety circuit
 root.after(0, lambda: check_safety_circuit(lj_connection, lj_gpio))
@@ -73,31 +81,41 @@ root.after(0, lambda: check_safety_circuit(lj_connection, lj_gpio))
 gui_title = tk.Label(root, text="Resistivity Measurement Test Setup", font='Helvetica 18 bold')
 gui_title.grid(row=0, columnspan=2, pady=10)
 
-# Initialize main frames
-control_frame = ControlFrame(root)
-sensor_frame = SensorFrame(root)
+# Initialize gui_functions_instance
+gui_functions = GUIFunctions()
 
+# Initialize main frames
+devices_frame = DevicesFrame(root, gui_functions)
+safety_circuit_frame = SafetyCircuitFrame(root, gui_functions)
+control_frame = ControlFrame(root, gui_functions)
+
+measurment_frame = MeasurementFrame(root, gui_functions)
+recording_frame = RecordingFrame(root, gui_functions)
+
+"""
 # Initialize sub frames
 sf1 = SubFrame1(control_frame.control_frame, lj_connection, lj_gpio, hvamp)
 sf2 = SubFrame2(control_frame.control_frame, electrometer)
 sf3 = SubFrame3(control_frame.control_frame)
 
 # Initialize gui functions object
-gui_functions_object = GUIFunctions(sf1.sub_frame1, sf2.sub_frame2, sf3.sub_frame3)
+# gui_functions_object = GUIFunctions(sf1.sub_frame1, sf2.sub_frame2, sf3.sub_frame3)
 
 # Set up ControlFrame
-control_frame.set_up(gui_functions_object)
+# control_frame.set_up(gui_functions)
 
 # start plot
-sf2.start_plotting(root, gui_functions_object, electrometer)
+# sf2.start_plotting(root, gui_functions, electrometer)
 
 # Show sensor values
-sensor_frame.show_measurements(gui_functions_object, humidity_sensor, hvamp)
+# sensor_frame.show_measurements(gui_functions_object, humidity_sensor, hvamp)
 
 # Setup plots
 
 # Start plot frame
-sf2.show_measurements(gui_functions_object, humidity_sensor, electrometer, hvamp)
+sf2.show_measurements(gui_functions, humidity_sensor, electrometer, hvamp)
+
+"""
 
 # Execute GUI
 root.mainloop()
