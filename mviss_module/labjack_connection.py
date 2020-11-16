@@ -13,29 +13,68 @@ class LabjackConnection:
         ConnectionError: The connection setup failed
         """
 
-        # Open Labjack connection with given parameters
-        try:
-            self.connection = ljm.openS("ANY", Parameters.LABJACK_CONNECTION, Parameters.LABJACK_SERIAL_NUMBER)
-        except (ValueError, LJMError):
-            pass
+        # Labjack connection handle (default: None. If connected: labjack handler instance)
+        self.connection_handle = None
 
-        # Check for success
-        print(self.connection)
-        if self.connection == 1:
+        # Labjack connection state (default: None, connection_error: False, connected: True)
+        self.connection_state = False
+
+        # Try to connect
+        self.connect()
+
+    def connect(self):
+        """ Function used for connecting to labjack with parameters specified in Parameters class
+
+        :return: True if connection successful, False if connection error occurred
+        """
+
+        # Check if already connected
+        if self.connection_state:
             if Parameters.DEBUG:
-                info = ljm.getHandleInfo(self.connection)
-                print("Opened a LabJack with Device type: %i, Connection type: %i,\n"
-                      "Serial number: %i, IP address: %s, Port: %i,\nMax bytes per MB: %i" %
-                      (info[0], info[1], info[2], ljm.numberToIP(info[3]), info[4], info[5]))
+                print("Function labjack_connection.connect: already connected!")
+            return True
+        # If not, try to connect
         else:
-            raise ConnectionError
+            # Open Labjack connection with given parameters
+            try:
+                self.connection_handle = ljm.openS("ANY", Parameters.LABJACK_CONNECTION, Parameters.LABJACK_SERIAL_NUMBER)
+            except (ValueError, LJMError):
+                if Parameters.DEBUG:
+                    print("Couldn't connect to labjack! (part 1)")
+                self.connection_state = False
+                return False
+
+            # Check for success
+            if self.connection_handle > 0:
+                if Parameters.DEBUG:
+                    info = ljm.getHandleInfo(self.connection_handle)
+                    print("Function labjack_connection.connect: connection successful!")
+                    print("Opened a LabJack with Device type: %i, Connection type: %i,\n"
+                          "Serial number: %i, IP address: %s, Port: %i,\nMax bytes per MB: %i" %
+                          (info[0], info[1], info[2], ljm.numberToIP(info[3]), info[4], info[5]))
+                self.connection_state = True
+                return True
+            # connection not successful
+            else:
+                if Parameters.DEBUG:
+                    print("Couldn't connect to labjack! (part 2)")
+                    print("Connection handle is: ", self.connection_handle)
+                self.connection_state = False
+                return False
 
     def get_handler(self):
         """
 
         :return: connection handler
         """
-        return self.connection
+        return self.connection_handle
+
+    def get_connection_state(self):
+        """
+
+        :return: connection state
+        """
+        return self.connection_state
 
     def read_analog(self, port):
         """
@@ -43,7 +82,14 @@ class LabjackConnection:
         :param port: Analog port to read value from
         :return: Analog input value in Volt [V]
         """
-        return ljm.eReadName(self.connection, port)
+        try:
+            result = ljm.eReadName(self.connection_handle, port)
+        except (TypeError, LJMError):
+            self.connection_state = False
+            self.close_connection()
+            return False
+
+        return result
 
     def read_digital(self, port):
         """
@@ -59,9 +105,11 @@ class LabjackConnection:
 
         result = -1
         try:
-            result = ljm.eReadName(self.connection, port)
+            result = ljm.eReadName(self.connection_handle, port)
         except (TypeError, LJMError):
-            pass
+            self.connection_state = False
+            self.close_connection()
+            return False
 
         if result == 0.0:
             return "LOW"
@@ -92,9 +140,11 @@ class LabjackConnection:
             raise ValueError
 
         try:
-            ljm.eWriteName(self.connection, port, state)
+            ljm.eWriteName(self.connection_handle, port, state)
         except (TypeError, LJMError):
-            pass
+            self.connection_state = False
+            self.close_connection()
+            return False
 
     def ljtick_dac_set_analog_out(self, port, voltage):
         """
@@ -124,13 +174,18 @@ class LabjackConnection:
             raise ValueError
 
         try:
-            ljm.eWriteName(self.connection, write, voltage)
+            ljm.eWriteName(self.connection_handle, write, voltage)
         except (TypeError, LJMError):
-            pass
+            self.connection_state = False
+            self.close_connection()
+            return False
 
     def close_connection(self):
         """
         Closes the labjack connection
         :return:
         """
-        ljm.close(self.connection)
+        try:
+            ljm.close(self.connection_handle)
+        except LJMError:
+            pass

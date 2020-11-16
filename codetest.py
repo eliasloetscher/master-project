@@ -1,3 +1,9 @@
-list = [1,2,3,4,5]
-list = list[1:len(list)]
-print(list)
+from mviss_module.labjack_connection import LabjackConnection
+import time
+
+handle = LabjackConnection()
+# print(handle.connection_state)
+
+while True:
+    print(handle.check_connection())
+    time.sleep(1)

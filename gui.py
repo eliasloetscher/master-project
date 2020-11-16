@@ -72,7 +72,6 @@ electrometer = ElectrometerControl()
 root = tk.Tk()
 root.title("MVISS")
 root.option_add("*Font", "TkDefaultFont 12")
-# root.option_add("*Sticky", "W")
 
 # start safety circuit
 root.after(0, lambda: check_safety_circuit(lj_connection, lj_gpio))
@@ -85,12 +84,15 @@ gui_title.grid(row=0, columnspan=2, pady=10)
 gui_functions = GUIFunctions()
 
 # Initialize main frames
-devices_frame = DevicesFrame(root, gui_functions)
+devices_frame = DevicesFrame(root, gui_functions, lj_connection, electrometer)
 safety_circuit_frame = SafetyCircuitFrame(root, gui_functions)
 control_frame = ControlFrame(root, gui_functions)
 
 measurment_frame = MeasurementFrame(root, gui_functions)
 recording_frame = RecordingFrame(root, gui_functions)
+
+# start label autoupdate
+devices_frame.auto_update_labels(root, lj_connection, electrometer)
 
 """
 # Initialize sub frames
