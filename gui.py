@@ -17,33 +17,41 @@ from mviss_module.gpio_functions import GPIOFunctions
 from sensors.htm2500lf import Htm2500lf
 from mviss_module.parameters import Parameters
 from devices.hvamp import HVAmp
+from devices.relays import Relays
 from keysight.electrometer_control import ElectrometerControl
 import sys
 from labjack.ljm import LJMError
 
 
 # function for safety circuit
-def check_safety_circuit(connection, lj_gpio):
+def check_safety_circuit(connection, relays):
     state_s1 = connection.read_digital(Parameters.LJ_DIGITAL_IN_PILZ_S1)
     state_s2 = connection.read_digital(Parameters.LJ_DIGITAL_IN_PILZ_S2)
-    state_safety_relay = lj_gpio.get_safety_relay_state()
+    state_safety_relay = relays.safety_state
 
     # if Parameters.DEBUG:
         # print("State S1: ", state_s1)
         # print("State S2: ", state_s2)
         # print("State safety relay: ", state_safety_relay)
 
-    # Note: if state is HIGH, switch is closed!
-    if state_s1 == "HIGH" and state_s2 == "HIGH" and state_safety_relay == "ON":
-        connection.write_digital(Parameters.LJ_DIGITAL_OUT_SIGNAL_LAMP, "LOW")
-    else:
-        connection.write_digital(Parameters.LJ_DIGITAL_OUT_SIGNAL_LAMP, "HIGH")
+    # Switch off safety relay if S1 or S2 is opened
+    if state_s1 == "LOW" or state_s2 == "LOW":
+        relays.switch_relay("SAFETY", "OFF", connection)
 
-    root.after(1000, lambda: check_safety_circuit(connection, lj_gpio))
+    # Switch signal lamp (note: if state is HIGH, switch is closed!)
+    if state_s1 == "HIGH" and state_s2 == "HIGH" and state_safety_relay == "closed":
+        relays.switch_relay("LAMP", "ON", connection)
+    else:
+        relays.switch_relay("LAMP", "OFF", connection)
+
+    root.after(1000, lambda: check_safety_circuit(connection, relays))
 
 
 # Setup labjack connection
 lj_connection = LabjackConnection()
+
+# Setup relay control
+relay_control = Relays()
 
 # Switch off all relays
 try:
@@ -55,6 +63,12 @@ except (ValueError, TypeError, LJMError):
     if Parameters.DEBUG:
         print("CRITICAL ERROR. ASSURE ALL RELAYS ARE SWITCHED OFF")
     sys.exit()
+else:
+    # Init relay states if no error occurred
+    relay_control.safety_state = "open"
+    relay_control.gnd_relay_state = "open"
+    relay_control.hv_relay_state = "open"
+
 
 # Setup labjack gpio object
 lj_gpio = GPIOFunctions()
@@ -74,7 +88,7 @@ root.title("MVISS")
 root.option_add("*Font", "TkDefaultFont 12")
 
 # start safety circuit
-root.after(0, lambda: check_safety_circuit(lj_connection, lj_gpio))
+root.after(0, lambda: check_safety_circuit(lj_connection, relay_control))
 
 # GUI Header
 gui_title = tk.Label(root, text="Resistivity Measurement Test Setup", font='Helvetica 18 bold')
@@ -85,7 +99,7 @@ gui_functions = GUIFunctions()
 
 # Initialize main frames
 devices_frame = DevicesFrame(root, gui_functions, lj_connection, electrometer)
-safety_circuit_frame = SafetyCircuitFrame(root, gui_functions)
+safety_circuit_frame = SafetyCircuitFrame(root, gui_functions, lj_connection, relay_control)
 control_frame = ControlFrame(root, gui_functions)
 
 measurment_frame = MeasurementFrame(root, gui_functions)
@@ -93,6 +107,7 @@ recording_frame = RecordingFrame(root, gui_functions)
 
 # start label autoupdate
 devices_frame.auto_update_labels(root, lj_connection, electrometer)
+safety_circuit_frame.auto_update_labels(root, lj_connection, relay_control)
 
 """
 # Initialize sub frames

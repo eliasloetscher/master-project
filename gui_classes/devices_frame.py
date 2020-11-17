@@ -32,7 +32,7 @@ class DevicesFrame:
 
         # Place labjack state label
         tk.Label(self.devices_frame, text="Labjack: ").grid(row=1, sticky="W", padx=(10, 0))
-        self.lj_state_label = tk.Label(self.devices_frame, text="n/a", fg="black")
+        self.lj_state_label = tk.Label(self.devices_frame, text="n/a")
         self.lj_state_label.grid(row=1, column=1, sticky="W")
 
         # Place labjack connection button
@@ -40,7 +40,7 @@ class DevicesFrame:
 
         # Place electrometer state label
         tk.Label(self.devices_frame, text="Electrometer: ").grid(row=2, sticky="W", padx=(10, 0), pady=(15, 0))
-        self.em_state_label = tk.Label(self.devices_frame, text="n/a", fg="black")
+        self.em_state_label = tk.Label(self.devices_frame, text="n/a")
         self.em_state_label.grid(row=2, column=1, sticky="W", pady=(15, 0))
 
         # Place electrometer connection button

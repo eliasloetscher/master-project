@@ -24,7 +24,6 @@ class SubFrame1:
         # title
         tk.Label(self.sub_frame1, text="Safety circuit", font="Helvetica 12 bold").grid(row=0, pady=20, columnspan=4, sticky="W")
 
-
         # Buttons for safety circuit
         tk.Label(self.sub_frame1, text="Safety circuit").grid(row=1, pady=5, columnspan=4, sticky='W')
         tk.Button(self.sub_frame1, text="ON",
