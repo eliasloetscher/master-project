@@ -1,5 +1,6 @@
 from mviss_module.parameters import Parameters
 from labjack.ljm import LJMError
+from random import *
 
 
 class HVAmp:
@@ -47,7 +48,6 @@ class HVAmp:
 
         :return:
         """
-
         try:
             result = self.lj_connection.read_analog(Parameters.LJ_ANALOG_IN_HVAMP_VOLTAGE)
         except (TypeError, ValueError, LJMError):
@@ -57,6 +57,7 @@ class HVAmp:
         voltage = result*500
 
         return voltage
+        # return randint(1, 100)
 
     def get_current(self):
         """

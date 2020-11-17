@@ -9,4 +9,4 @@ class SubFrame3:
         self.sub_frame3.grid(row=3, padx=10, columnspan=4, sticky="W")
         self.sub_frame3.grid_forget()
         tk.Label(self.sub_frame3, text="Subframe 3", font="Helvetica 12 bold").grid(row=0, pady=20, columnspan=4,
-                                                                                    sticky="W")
+                                                                                  sticky="W")
