@@ -100,7 +100,7 @@ gui_functions = GUIFunctions()
 # Initialize main frames
 devices_frame = DevicesFrame(root, gui_functions, lj_connection, electrometer)
 safety_circuit_frame = SafetyCircuitFrame(root, gui_functions, lj_connection, relay_control)
-control_frame = ControlFrame(root, gui_functions)
+control_frame = ControlFrame(root, gui_functions, lj_connection, relay_control, hvamp)
 
 measurment_frame = MeasurementFrame(root, gui_functions)
 recording_frame = RecordingFrame(root, gui_functions)
@@ -108,6 +108,7 @@ recording_frame = RecordingFrame(root, gui_functions)
 # start label autoupdate
 devices_frame.auto_update_labels(root, lj_connection, electrometer)
 safety_circuit_frame.auto_update_labels(root, lj_connection, relay_control)
+control_frame.auto_update_labels(root, relay_control)
 
 """
 # Initialize sub frames

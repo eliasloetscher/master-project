@@ -11,6 +11,9 @@ class Relays:
         self.hv_relay_state = "n/a"
         self.gnd_relay_state = "n/a"
 
+        # Init message var
+        self.control_message = ""
+
     def switch_relay(self, name, state, labjack):
         """ Switch relays
 
@@ -34,6 +37,7 @@ class Relays:
         if self.safety_state == "open":
             if name == 'HV' or name == 'GND':
                 if state == "ON":
+                    self.control_message = "Error! Close safety circuit first."
                     return "Error! Close safety circuit first."
 
         # Check if state is valid and prepare to switch
@@ -61,17 +65,21 @@ class Relays:
         try:
             labjack.write_digital(port, write)
         except (ValueError, TypeError, LJMError):
+            self.control_message = "Error! Check labjack connection."
             return "Error! Check labjack connection."
         else:
             # if write process is successful, change class relay state
             if name == 'SAFETY':
                 self.safety_state = state_to_store
+                self.control_message = ""
                 return "Success! Safety relay switched."
             elif name == 'HV':
                 self.hv_relay_state = state_to_store
+                self.control_message = ""
                 return "Success! HV relay switched."
             elif name == 'GND':
                 self.gnd_relay_state = state_to_store
+                self.control_message = ""
                 return "Success! GND relay switched."
             elif name == "LAMP":
                 return "Success! LAMP relay switched"

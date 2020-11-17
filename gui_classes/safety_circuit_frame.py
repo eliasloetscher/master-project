@@ -47,17 +47,15 @@ class SafetyCircuitFrame:
         self.relay_state_label.grid(row=3, column=1, sticky="W", padx=(12, 0), pady=(10, 0), columnspan=2)
 
         # Set and place 'close' or 'open' safety circuit buttons
-        control_label = tk.Label(self.safety_circuit_frame, text="Safety circuit control")
-        control_label.grid(row=4, sticky="W", padx=(10, 0), pady=(20, 0), columnspan=2)
         open_button = tk.Button(self.safety_circuit_frame, text="Open", command=lambda: relays.switch_relay("SAFETY", "OFF", labjack))
         close_button = tk.Button(self.safety_circuit_frame, text="Close", command=lambda: relays.switch_relay("SAFETY", "ON", labjack))
-        open_button.grid(row=4, column=1, sticky="W", pady=(20, 0), padx=(70, 0))
-        close_button.grid(row=4, column=2, sticky="W", pady=(20, 0), padx=(10, 0))
+        open_button.grid(row=3, column=2, sticky="W", pady=(10, 0), padx=(20, 0))
+        close_button.grid(row=3, column=3, sticky="W", pady=(10, 0), padx=(10, 0))
 
-        # Initialize state frame
+        # Initialize safety state frame
         self.state_frame = tk.Frame(self.safety_circuit_frame, width=50, height=50, highlightbackground="black",
                                     highlightthickness=1, bg="green")
-        self.state_frame.place(x=350, y=130)
+        self.state_frame.place(x=350, y=100)
 
     def auto_update_labels(self, root, labjack, relays):
         """
