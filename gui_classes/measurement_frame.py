@@ -1,4 +1,5 @@
 import tkinter as tk
+import tkinter.messagebox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import threading
@@ -37,10 +38,6 @@ class MeasurementFrame:
         measurement_frame_title = tk.Label(self.measurement_frame, text="Measurements", font="Helvetica 14 bold")
         measurement_frame_title.grid(padx=5, pady=5, columnspan=2, sticky="W")
 
-        # Place label for radio buttons
-        rad_label = tk.Label(self.measurement_frame, text="Choose sub frame")
-        rad_label.grid(row=1, pady=10, padx=10, columnspan=2, sticky="W")
-
         # Create radio buttons
         v = tk.IntVar()
         rad1 = tk.Radiobutton(self.measurement_frame, text="Overview", variable=v, value=1,
@@ -58,39 +55,48 @@ class MeasurementFrame:
         rad2.grid(row=2, column=1, padx=15, sticky="W")
         rad3.grid(row=2, column=2, padx=15, sticky="W")
         rad4.grid(row=2, column=3, padx=15, sticky="W")
-        rad5.grid(row=2, column=4, padx=15, sticky="W")
+        rad5.grid(row=2, column=4, padx=(15, 100), sticky="W")
 
         # Initialize sub frames
         self.sub_frame_overview = tk.Frame(self.measurement_frame, width=600, height=450)
         self.sub_frame_overview.grid(row=3, padx=10, sticky="W")
-        self.sub_frame_voltage = tk.Frame(self.measurement_frame, width=600, height=450)
+        self.sub_frame_voltage = tk.Frame(self.measurement_frame, width=650, height=450, bg="blue", highlightbackground="black",
+                                          highlightthickness=1)
         self.sub_frame_current = tk.Frame(self.measurement_frame, width=600, height=450)
         self.sub_frame_temperature = tk.Frame(self.measurement_frame, width=600, height=450)
         self.sub_frame_humidity = tk.Frame(self.measurement_frame, width=600, height=450)
+
+        self.sub_frame_voltage.grid_propagate(False)
+
 
         # ------------- Sub Frame: Overview ------------ #
         tk.Label(self.sub_frame_overview, text="Overview").grid(padx=(10, 0), sticky="W")
 
         # ------------- Sub Frame: Voltage ------------ #
-        tk.Label(self.sub_frame_voltage, text="Live voltage plot").grid(padx=(10, 0), sticky="W")
+        self.linlogmode_voltage = tk.StringVar()
+        self.linlogmode_voltage.set("lin")
+        self.meas_interval_voltage = 1000
 
-        self.voltage = tk.StringVar()
-        self.voltage.set("n/a")
-
-        self.fig = Figure(figsize=(4, 2))
+        self.fig = Figure(figsize=(5, 3.5), facecolor="gray", frameon=False, tight_layout=True)
 
         self.ax = self.fig.add_subplot(111)
-        self.ax.set_xlabel("X axis")
-        self.ax.set_ylabel("Y axis")
+        self.ax.set_title("Voltage Plot")
+        self.ax.set_xlabel("Time in s")
+        self.ax.set_ylabel("Voltage in V")
         self.ax.grid()
 
         self.datapoints = []
 
         self.graph = FigureCanvasTkAgg(self.fig, master=self.sub_frame_voltage)
-        self.graph.get_tk_widget().grid(row=1, columnspan=5)
+        self.graph.get_tk_widget().place(x=10, y=20)
 
-        tk.Button(self.sub_frame_voltage, text="stop", command=lambda: self.master.after_cancel(self.after_id_volt)).grid(row=2)
-        tk.Button(self.sub_frame_voltage, text="start", command=self.update_voltage_plot).grid(row=3)
+        tk.Button(self.sub_frame_voltage, text="Start", command=self.start_voltage_plot).grid(row=1, padx=(10, 0), pady=(400, 0), sticky="S")
+        tk.Button(self.sub_frame_voltage, text="Stop", command=lambda: self.master.after_cancel(self.after_id_volt)).grid(row=1, column=1, pady=10, sticky="W")
+        tk.Button(self.sub_frame_voltage, text="Lin mode", command=lambda: self.linlogmode_voltage.set("lin")).grid(row=1, column=2, pady=10, sticky="W")
+        tk.Button(self.sub_frame_voltage, text="Log mode", command=lambda: self.linlogmode_voltage.set("log")).grid(row=1, column=3, pady=10, sticky="W")
+        self.meas_interval_voltage_input = tk.Entry(self.sub_frame_voltage, width=6)
+        self.meas_interval_voltage_input.grid(row=1, column=4, padx=(10, 0), pady=10, sticky="W")
+        tk.Button(self.sub_frame_voltage, text="Set", command=self.update_meas_interval_voltage).grid(row=1, column=5, padx=(10, 0), pady=10, sticky="W")
 
         # ------------- Sub Frame: Current ------------ #
         tk.Label(self.sub_frame_current, text="Live current plot").grid(padx=(10, 0), sticky="W")
@@ -100,6 +106,17 @@ class MeasurementFrame:
 
         # ------------- Sub Frame: Humidity ------------ #
         tk.Label(self.sub_frame_humidity, text="Live humidity plot").grid(padx=(10, 0), sticky="W")
+
+    def update_meas_interval_voltage(self):
+        if int(self.meas_interval_voltage_input.get()) < 200:
+            print("Error! Measurement interval too small")
+            tk.messagebox.showerror("Error", "Measurement too small. Must be > 100 ms.")
+        else:
+            self.meas_interval_voltage = int(self.meas_interval_voltage_input.get())
+
+    def start_voltage_plot(self):
+        self.ax.cla()
+        self.update_voltage_plot()
 
     def update_voltage_plot(self):
 
@@ -112,13 +129,24 @@ class MeasurementFrame:
         self.datapoints.append(value)
 
         self.ax.cla()
+        self.ax.set_xlabel("Time in s")
+        self.ax.set_ylabel("Voltage in V")
         self.ax.grid()
-        self.ax.plot(range(len(self.datapoints)), self.datapoints)
+
+        if self.linlogmode_voltage.get() == "lin":
+            self.ax.plot(range(len(self.datapoints)), self.datapoints)
+            print("plot lin")
+        elif self.linlogmode_voltage.get() == "log":
+            self.ax.semilogy(range(len(self.datapoints)), self.datapoints)
+            print("plot log")
+        else:
+            print("Plot Error. Lin/log mode value error.")
+
         self.graph.draw()
 
         print(self.after_id_volt)
 
-        self.after_id_volt = self.master.after(1000, self.update_voltage_plot)
+        self.after_id_volt = self.master.after(self.meas_interval_voltage, self.update_voltage_plot)
 
     def show_sub_frame_overview(self):
         self.sub_frame_overview.grid(row=3, padx=10, sticky="W", columnspan=4)
@@ -129,7 +157,8 @@ class MeasurementFrame:
 
     def show_sub_frame_voltage(self):
         self.sub_frame_overview.grid_forget()
-        self.sub_frame_voltage.grid(row=3, padx=10, sticky="W", columnspan=4)
+        self.sub_frame_voltage.grid(row=3, sticky="W", columnspan=6)
+        self.sub_frame_voltage.grid_propagate(False)
         self.sub_frame_current.grid_forget()
         self.sub_frame_temperature.grid_forget()
         self.sub_frame_humidity.grid_forget()
