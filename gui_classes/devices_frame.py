@@ -21,7 +21,7 @@ class DevicesFrame:
         self.gui_functions = gui_functions
 
         # Initialize and place frame
-        self.devices_frame = tk.Frame(self.master, width=500, height=200, highlightbackground="black",
+        self.devices_frame = tk.Frame(self.master, width=430, height=150, highlightbackground="black",
                                       highlightthickness=1)
         self.devices_frame.grid(row=1, padx=20, pady=(0, 20))
         self.devices_frame.grid_propagate(False)  # Avoid frame shrinking to the size of the included elements

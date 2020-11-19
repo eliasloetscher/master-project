@@ -1,4 +1,5 @@
 import tkinter as tk
+import tkinter.messagebox
 
 
 class ControlFrame:
@@ -9,7 +10,7 @@ class ControlFrame:
     None
     """
 
-    def __init__(self, master, gui_functions, labjack, relays, hvamp):
+    def __init__(self, master, gui_functions, labjack, relays, hvamp, electrometer):
         """ Constructor of the control frame class
 
         :param master: parent frame/window
@@ -19,11 +20,12 @@ class ControlFrame:
         # Initialize vars
         self.master = master
         self.gui_functions = gui_functions
+        self.electrometer = electrometer
 
         # Initialize and place frame
-        self.control_frame = tk.Frame(self.master, width=500, height=250, highlightbackground="black",
+        self.control_frame = tk.Frame(self.master, width=430, height=300, highlightbackground="black",
                                       highlightthickness=1)
-        self.control_frame.grid(row=3, padx=20, pady=(0, 20))
+        self.control_frame.grid(row=3, padx=20, pady=(0, 20), rowspan=2)
         self.control_frame.grid_propagate(False)  # Avoid frame shrinking to the size of the included elements
 
         # Set and place frame title
@@ -33,43 +35,50 @@ class ControlFrame:
         # Place HV relay state label
         tk.Label(self.control_frame, text="HV relay:").grid(row=1, sticky="W", padx=(10, 0))
         self.hv_relay_state_label = tk.Label(self.control_frame, text="n/a")
-        self.hv_relay_state_label.grid(row=1, column=1, sticky="W", padx=(20, 0))
+        self.hv_relay_state_label.grid(row=1, column=1, sticky="W", padx=(0, 0))
 
         # Place GND relay state label
         tk.Label(self.control_frame, text="GND relay:").grid(row=2, sticky="W", padx=(10, 0), pady=(10, 0))
         self.gnd_relay_state_label = tk.Label(self.control_frame, text="n/a")
-        self.gnd_relay_state_label.grid(row=2, column=1, sticky="W", padx=(20, 0), pady=(10, 0))
+        self.gnd_relay_state_label.grid(row=2, column=1, sticky="W", pady=(10, 0), padx=(0, 25))
 
         # Set and place 'close' or 'open' buttons for hv relay
-        hv_open_button = tk.Button(self.control_frame, text="Open",
+        hv_open_button = tk.Button(self.control_frame, text="Open", width=7,
                                    command=lambda: relays.switch_relay("HV", "OFF", labjack))
-        hv_close_button = tk.Button(self.control_frame, text="Close",
+        hv_close_button = tk.Button(self.control_frame, text="Close", width=7,
                                     command=lambda: relays.switch_relay("HV", "ON", labjack))
-        hv_open_button.grid(row=1, column=1, sticky="W", pady=(5, 0), padx=(85, 0))
-        hv_close_button.grid(row=1, column=2, sticky="W", pady=(5, 0), padx=(10, 0))
+        hv_open_button.grid(row=1, column=2, sticky="W", pady=(5, 0))
+        hv_close_button.grid(row=1, column=3, sticky="W", pady=(5, 0), padx=(5, 0))
 
         # Set and place 'close' or 'open' buttons for gnd relay
-        gnd_open_button = tk.Button(self.control_frame, text="Open",
+        gnd_open_button = tk.Button(self.control_frame, text="Open", width=7,
                                     command=lambda: relays.switch_relay("GND", "OFF", labjack))
-        gnd_close_button = tk.Button(self.control_frame, text="Close",
+        gnd_close_button = tk.Button(self.control_frame, text="Close", width=7,
                                      command=lambda: relays.switch_relay("GND", "ON", labjack))
-        gnd_open_button.grid(row=2, column=1, sticky="W", pady=(10, 0), padx=(85, 0))
-        gnd_close_button.grid(row=2, column=2, sticky="W", pady=(10, 0), padx=(10, 0))
+        gnd_open_button.grid(row=2, column=2, sticky="W", pady=(10, 0))
+        gnd_close_button.grid(row=2, column=3, sticky="W", pady=(10, 0), padx=(5, 0))
+
+        # Place amperemeter enable/disable
+        tk.Label(self.control_frame, text="Amperemeter:").grid(row=3, sticky="W", padx=(10, 0), pady=(10, 0))
+        self.ampmeter_state_label = tk.Label(self.control_frame, text="n/a")
+        self.ampmeter_state_label.grid(row=3, column=1, sticky="W", pady=(10, 0))
+        tk.Button(self.control_frame, text="Enable", width=7, command=self.enable_electrometer).grid(row=3, column=2, pady=(10, 0), sticky="W")
+        tk.Button(self.control_frame, text="Disable", width=7, command=self.electrometer.disable_current_input).grid(row=3, column=3, padx=(5, 0), pady=(10, 0), sticky="W")
 
         # Place voltage entry field
-        tk.Label(self.control_frame, text="Voltage in V: ").grid(row=3, sticky="W", padx=(10, 0), pady=(30, 0), columnspan=2)
+        tk.Label(self.control_frame, text="Voltage in V:").grid(row=4, sticky="W", padx=(10, 0), pady=(30, 0))
         voltage = tk.Entry(self.control_frame, width=6)
-        voltage.grid(row=3, column=1, sticky="W", pady=(30, 0), padx=(30, 0))
+        voltage.grid(row=4, column=1, sticky="W", pady=(30, 0))
         volt_button = tk.Button(self.control_frame, text="Set", command=lambda: hvamp.set_voltage(int(voltage.get())))
-        volt_button.grid(row=3, column=1, sticky="W", padx=(100, 0), pady=(30, 0))
+        volt_button.grid(row=4, column=2, sticky="W", pady=(30, 0))
 
         # Place label for control_message
         self.control_message = tk.Label(self.control_frame, text="", fg="red")
-        self.control_message.grid(row=4, sticky="W", padx=10, pady=20, columnspan=3)
+        self.control_message.grid(row=5, sticky="W", padx=10, pady=(30, 0), columnspan=3)
 
         # Initialize high voltage state frame
         self.state_frame = tk.Frame(self.control_frame, width=50, height=50, highlightthickness=1, highlightbackground="black", bg="green")
-        self.state_frame.place(x=350, y=130)
+        self.state_frame.place(x=370, y=180)
 
     def auto_update_labels(self, root, relays):
         # Prepare labels
@@ -100,3 +109,7 @@ class ControlFrame:
 
         # repeat with a given time interval
         root.after(500, lambda: self.auto_update_labels(root, relays))
+
+    def enable_electrometer(self):
+        if tk.messagebox.showwarning("Warning", "Assure that the current is < 20 mA. \nOtherwise, the device may be damaged. \nProceed?"):
+            self.electrometer.enable_current_input()

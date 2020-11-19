@@ -36,9 +36,9 @@ class MeasurementFrame:
         self.hum_sensor = hum_sensor
 
         # Initialize and place frame
-        self.measurement_frame = tk.Frame(self.master, width=700, height=520, highlightbackground="black",
+        self.measurement_frame = tk.Frame(self.master, width=650, height=520, highlightbackground="black",
                                           highlightthickness=1)
-        self.measurement_frame.grid(row=1, column=1, padx=(0, 20), pady=(0, 20), rowspan=2)
+        self.measurement_frame.grid(row=1, column=1, padx=(0, 20), pady=(0, 20), rowspan=3)
         self.measurement_frame.grid_propagate(False)  # Avoid frame shrinking to the size of the included elements
 
         # Set and place frame title
@@ -65,21 +65,42 @@ class MeasurementFrame:
         rad5.grid(row=2, column=4, padx=(15, 100), sticky="W")
 
         # Initialize sub frames
-        self.sub_frame_overview = tk.Frame(self.measurement_frame, width=600, height=450)
-        self.sub_frame_overview.grid(row=3, padx=10, sticky="W")
+        self.sub_frame_overview = tk.Frame(self.measurement_frame, width=650, height=450)
+        self.sub_frame_overview.grid(row=3, sticky="W", columnspan=6)
         self.sub_frame_voltage = tk.Frame(self.measurement_frame, width=650, height=450)
         self.sub_frame_current = tk.Frame(self.measurement_frame, width=650, height=450)
         self.sub_frame_temp = tk.Frame(self.measurement_frame, width=650, height=450)
         self.sub_frame_humidity = tk.Frame(self.measurement_frame, width=650, height=450)
 
         #self.sub_frame_overview.grid_propagate(False)
+        self.sub_frame_overview.grid_propagate(False)
         self.sub_frame_voltage.grid_propagate(False)
         self.sub_frame_current.grid_propagate(False)
         self.sub_frame_temp.grid_propagate(False)
         self.sub_frame_humidity.grid_propagate(False)
 
         # ------------- Sub Frame: Overview ------------ #
-        tk.Label(self.sub_frame_overview, text="Overview").grid(padx=(10, 0), sticky="W")
+        self.fig_overview = Figure(figsize=(6.2, 3.8), frameon=False, tight_layout=True)
+
+        self.ax_overview_volt = self.fig_overview.add_subplot(221)
+        self.ax_overview_current = self.fig_overview.add_subplot(222)
+        self.ax_overview_temp = self.fig_overview.add_subplot(223)
+        self.ax_overview_humidity = self.fig_overview.add_subplot(224)
+
+        self.ax_overview_volt.set_title("Voltage")
+        self.ax_overview_current.set_title("Current")
+        self.ax_overview_temp.set_title("Temperature")
+        self.ax_overview_humidity.set_title("Humidity")
+
+        self.ax_overview_volt.grid()
+        self.ax_overview_current.grid()
+        self.ax_overview_temp.grid()
+        self.ax_overview_humidity.grid()
+
+        self.graph_overview = FigureCanvasTkAgg(self.fig_overview, master=self.sub_frame_overview)
+        self.graph_overview.get_tk_widget().place(x=10, y=10)
+
+
 
         #####################################################
         # --------------- Sub Frame: Voltage -------------- #
@@ -279,7 +300,7 @@ class MeasurementFrame:
             self.meas_interval_humidity = int(self.meas_interval_humidity_input.get())
 
     def show_sub_frame_overview(self):
-        self.sub_frame_overview.grid(row=3, padx=10, sticky="W", columnspan=4)
+        self.sub_frame_overview.grid(row=3, sticky="W", columnspan=6)
         self.sub_frame_overview.grid_propagate(False)
         self.sub_frame_voltage.grid_forget()
         self.sub_frame_current.grid_forget()

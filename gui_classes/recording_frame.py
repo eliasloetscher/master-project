@@ -21,9 +21,9 @@ class RecordingFrame:
         self.gui_functions = gui_functions
 
         # Initialize and place frame
-        self.recording_frame = tk.Frame(self.master, width=700, height=250, highlightbackground="black",
+        self.recording_frame = tk.Frame(self.master, width=650, height=150, highlightbackground="black",
                                              highlightthickness=1)
-        self.recording_frame.grid(row=3, column=1, padx=(0, 20), pady=(0, 20))
+        self.recording_frame.grid(row=4, column=1, padx=(0, 20), pady=(0, 20))
         self.recording_frame.grid_propagate(False)  # Avoid frame shrinking to the size of the included elements
 
         # Set and place frame title

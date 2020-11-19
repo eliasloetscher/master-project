@@ -22,7 +22,7 @@ class SafetyCircuitFrame:
         self.gui_functions = gui_functions
 
         # Initialize and place frame
-        self.safety_circuit_frame = tk.Frame(self.master, width=500, height=300, highlightbackground="black",
+        self.safety_circuit_frame = tk.Frame(self.master, width=430, height=200, highlightbackground="black",
                                              highlightthickness=1)
         self.safety_circuit_frame.grid(row=2, padx=20, pady=(0, 20))
         self.safety_circuit_frame.grid_propagate(False)  # Avoid frame shrinking to the size of the included elements
@@ -47,15 +47,15 @@ class SafetyCircuitFrame:
         self.relay_state_label.grid(row=3, column=1, sticky="W", padx=(12, 0), pady=(10, 0), columnspan=2)
 
         # Set and place 'close' or 'open' safety circuit buttons
-        open_button = tk.Button(self.safety_circuit_frame, text="Open", command=lambda: relays.switch_relay("SAFETY", "OFF", labjack))
-        close_button = tk.Button(self.safety_circuit_frame, text="Close", command=lambda: relays.switch_relay("SAFETY", "ON", labjack))
+        open_button = tk.Button(self.safety_circuit_frame, text="Open", width=7, command=lambda: relays.switch_relay("SAFETY", "OFF", labjack))
+        close_button = tk.Button(self.safety_circuit_frame, text="Close", width=7, command=lambda: relays.switch_relay("SAFETY", "ON", labjack))
         open_button.grid(row=3, column=2, sticky="W", pady=(10, 0), padx=(20, 0))
-        close_button.grid(row=3, column=3, sticky="W", pady=(10, 0), padx=(10, 0))
+        close_button.grid(row=3, column=3, sticky="W", pady=(10, 0), padx=(5, 0))
 
         # Initialize safety state frame
         self.state_frame = tk.Frame(self.safety_circuit_frame, width=50, height=50, highlightbackground="black",
                                     highlightthickness=1, bg="green")
-        self.state_frame.place(x=350, y=100)
+        self.state_frame.place(x=370, y=100)
 
     def auto_update_labels(self, root, labjack, relays):
         """
