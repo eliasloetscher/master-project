@@ -1,4 +1,4 @@
-from mviss_module.parameters import Parameters
+from parameters import Parameters
 
 
 def measure_all_values(humidity_sensor, hvamp):

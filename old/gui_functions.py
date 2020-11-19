@@ -1,6 +1,5 @@
-from mviss_module.parameters import Parameters
-import mviss_module.measure_module as measure
-from labjack.ljm import LJMError
+from parameters import Parameters
+import utilities.measure_module as measure
 
 
 class GUIFunctions:

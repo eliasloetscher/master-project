@@ -111,5 +111,5 @@ class ControlFrame:
         root.after(500, lambda: self.auto_update_labels(root, relays))
 
     def enable_electrometer(self):
-        if tk.messagebox.showwarning("Warning", "Assure that the current is < 20 mA. \nOtherwise, the device may be damaged. \nProceed?"):
+        if tk.messagebox.showwarning("Warning", "Assure that the current is < 20 mA. \nOtherwise, the device may be damaged. \nProceed?", type="okcancel") == 'ok':
             self.electrometer.enable_current_input()

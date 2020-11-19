@@ -1,5 +1,4 @@
-from mviss_module.parameters import Parameters
-from labjack import ljm
+from parameters import Parameters
 
 
 class Htm2500lf:

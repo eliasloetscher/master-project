@@ -1,6 +1,6 @@
-from sensors.htm2500lf import Htm2500lf
-from mviss_module.labjack_connection import LabjackConnection
-import mviss_module.log_module as log
+from devices.humidity_sensor_htm2500lf import Htm2500lf
+from devices.labjack_t7pro import LabjackConnection
+import utilities.log_module as log
 import time
 
 

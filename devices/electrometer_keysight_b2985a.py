@@ -1,6 +1,5 @@
 import pyvisa as visa
-from mviss_module.parameters import Parameters
-from pyvisa import constants
+from parameters import Parameters
 from pyvisa import VisaIOError
 
 

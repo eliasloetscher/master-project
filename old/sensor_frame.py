@@ -1,7 +1,4 @@
 import tkinter as tk
-from gui_classes.gui_functions import GUIFunctions
-from tkinter import Frame
-import tkinter.messagebox as messagebox
 
 
 class SensorFrame:

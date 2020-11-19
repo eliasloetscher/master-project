@@ -2,7 +2,7 @@
 
 import time
 import datetime
-from mviss_module.parameters import Parameters
+from parameters import Parameters
 from pathlib import Path
 
 

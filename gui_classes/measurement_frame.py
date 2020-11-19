@@ -2,7 +2,7 @@ import tkinter as tk
 import tkinter.messagebox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-import mviss_module.measure_module as measure
+import utilities.measure_module as measure
 import threading
 import time
 

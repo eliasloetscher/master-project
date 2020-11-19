@@ -1,4 +1,4 @@
-from keysight.electrometer_control import ElectrometerControl
+from devices.electrometer_keysight_b2985a import ElectrometerControl
 import time
 
 inst = ElectrometerControl()

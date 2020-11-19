@@ -1,4 +1,4 @@
-from mviss_module.labjack_connection import LabjackConnection
+from devices.labjack_t7pro import LabjackConnection
 import time
 
 handle = LabjackConnection()

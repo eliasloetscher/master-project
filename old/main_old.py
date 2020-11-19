@@ -1,9 +1,8 @@
 # Main python script
 
-import time
-from mviss_module.labjack_connection import LabjackConnection
-from sensors.htm2500lf import Htm2500lf
-from devices.hvamp import HVAmp
+from devices.labjack_t7pro import LabjackConnection
+from devices.humidity_sensor_htm2500lf import Htm2500lf
+from devices.hv_amp_ultravolt_hva5kv import HVAmp
 
 connection = LabjackConnection()
 hum_sensor = Htm2500lf(connection)

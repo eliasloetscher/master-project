@@ -6,19 +6,15 @@ from gui_classes.devices_frame import DevicesFrame
 from gui_classes.measurement_frame import MeasurementFrame
 from gui_classes.recording_frame import RecordingFrame
 
-from gui_classes.gui_functions import GUIFunctions
+from old.gui_functions import GUIFunctions
 
-from gui_classes.sub_frame1 import SubFrame1
-from gui_classes.sub_frame2 import SubFrame2
-from gui_classes.sub_frame3 import SubFrame3
-
-from mviss_module.labjack_connection import LabjackConnection
-from mviss_module.gpio_functions import GPIOFunctions
-from sensors.htm2500lf import Htm2500lf
-from mviss_module.parameters import Parameters
-from devices.hvamp import HVAmp
+from devices.labjack_t7pro import LabjackConnection
+from utilities.gpio_module import GPIOFunctions
+from devices.humidity_sensor_htm2500lf import Htm2500lf
+from parameters import Parameters
+from devices.hv_amp_ultravolt_hva5kv import HVAmp
 from devices.relays import Relays
-from keysight.electrometer_control import ElectrometerControl
+from devices.electrometer_keysight_b2985a import ElectrometerControl
 import sys
 from labjack.ljm import LJMError
 

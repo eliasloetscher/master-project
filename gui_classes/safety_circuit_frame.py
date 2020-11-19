@@ -1,5 +1,5 @@
 import tkinter as tk
-from mviss_module.parameters import Parameters
+from parameters import Parameters
 
 
 class SafetyCircuitFrame:

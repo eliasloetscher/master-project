@@ -1,6 +1,4 @@
-import tkinter as tk
-import tkinter.messagebox
-from mviss_module.parameters import Parameters
+from parameters import Parameters
 from labjack.ljm import LJMError
 
 

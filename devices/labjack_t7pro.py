@@ -1,4 +1,4 @@
-from mviss_module.parameters import Parameters
+from parameters import Parameters
 from labjack import ljm
 from labjack.ljm import LJMError
 
