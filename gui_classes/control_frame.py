@@ -10,20 +10,21 @@ class ControlFrame:
     None
     """
 
-    def __init__(self, master, gui_functions, labjack, relays, hvamp, electrometer):
+    def __init__(self, root, labjack, relays, electrometer, hvamp):
         """ Constructor of the control frame class
 
-        :param master: parent frame/window
-        :param gui_functions: instance of gui_functions used to handle all gui actions
+        :param root: parent frame/window
         """
 
         # Initialize vars
-        self.master = master
-        self.gui_functions = gui_functions
+        self.root = root
+        self.labjack = labjack
+        self.relays = relays
         self.electrometer = electrometer
+        self.hvamp = hvamp
 
         # Initialize and place frame
-        self.control_frame = tk.Frame(self.master, width=430, height=300, highlightbackground="black",
+        self.control_frame = tk.Frame(self.root, width=430, height=300, highlightbackground="black",
                                       highlightthickness=1)
         self.control_frame.grid(row=3, padx=20, pady=(0, 20), rowspan=2)
         self.control_frame.grid_propagate(False)  # Avoid frame shrinking to the size of the included elements
@@ -80,9 +81,12 @@ class ControlFrame:
         self.state_frame = tk.Frame(self.control_frame, width=50, height=50, highlightthickness=1, highlightbackground="black", bg="green")
         self.state_frame.place(x=370, y=180)
 
-    def auto_update_labels(self, root, relays):
+        # Start to update labels periodically
+        self.auto_update_labels()
+
+    def auto_update_labels(self):
         # Prepare labels
-        label_text = [relays.hv_relay_state, relays.gnd_relay_state]
+        label_text = [self.relays.hv_relay_state, self.relays.gnd_relay_state]
         label_colours = []
         for element in label_text:
             if element == "closed":
@@ -99,7 +103,7 @@ class ControlFrame:
         # Update labels
         self.hv_relay_state_label.configure(text=label_text[0], fg=label_colours[0])
         self.gnd_relay_state_label.configure(text=label_text[1], fg=label_colours[1])
-        self.control_message.configure(text=relays.control_message)
+        self.control_message.configure(text=self.relays.control_message)
 
         # Update state frame (red if hv relay is closed)
         if label_text[0] == 'closed':
@@ -108,7 +112,7 @@ class ControlFrame:
             self.state_frame.configure(bg="green")
 
         # repeat with a given time interval
-        root.after(500, lambda: self.auto_update_labels(root, relays))
+        self.root.after(500, self.auto_update_labels)
 
     def enable_electrometer(self):
         if tk.messagebox.showwarning("Warning", "Assure that the current is < 20 mA. \nOtherwise, the device may be damaged. \nProceed?", type="okcancel") == 'ok':

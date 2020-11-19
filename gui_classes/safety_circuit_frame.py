@@ -10,19 +10,19 @@ class SafetyCircuitFrame:
     None
     """
 
-    def __init__(self, master, gui_functions, labjack, relays):
+    def __init__(self, root, labjack, relays):
         """ Constructor of the safety circuit class
 
-        :param master: parent frame/window
-        :param gui_functions: instance of gui_functions used to handle all gui actions
+        :param root: parent frame/window
         """
 
         # Initialize vars
-        self.master = master
-        self.gui_functions = gui_functions
+        self.root = root
+        self.labjack = labjack
+        self.relays = relays
 
         # Initialize and place frame
-        self.safety_circuit_frame = tk.Frame(self.master, width=430, height=200, highlightbackground="black",
+        self.safety_circuit_frame = tk.Frame(self.root, width=430, height=200, highlightbackground="black",
                                              highlightthickness=1)
         self.safety_circuit_frame.grid(row=2, padx=20, pady=(0, 20))
         self.safety_circuit_frame.grid_propagate(False)  # Avoid frame shrinking to the size of the included elements
@@ -57,7 +57,10 @@ class SafetyCircuitFrame:
                                     highlightthickness=1, bg="green")
         self.state_frame.place(x=370, y=100)
 
-    def auto_update_labels(self, root, labjack, relays):
+        # Start to update labels periodically
+        self.auto_update_labels()
+
+    def auto_update_labels(self):
         """
 
         :param root:
@@ -67,9 +70,9 @@ class SafetyCircuitFrame:
         """
 
         # Get states
-        s1_state = labjack.read_digital(Parameters.LJ_DIGITAL_IN_PILZ_S1)
-        s2_state = labjack.read_digital(Parameters.LJ_DIGITAL_IN_PILZ_S2)
-        relay_state_text = relays.safety_state
+        s1_state = self.labjack.read_digital(Parameters.LJ_DIGITAL_IN_PILZ_S1)
+        s2_state = self.labjack.read_digital(Parameters.LJ_DIGITAL_IN_PILZ_S2)
+        relay_state_text = self.relays.safety_state
 
         # Prepare s1 label text
         if s1_state == "HIGH":
@@ -118,4 +121,4 @@ class SafetyCircuitFrame:
             self.state_frame.configure(bg="green")
 
         # repeat with a given time interval
-        root.after(500, lambda: self.auto_update_labels(root, labjack, relays))
+        self.root.after(500, self.auto_update_labels)

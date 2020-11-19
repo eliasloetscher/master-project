@@ -1,7 +1,7 @@
 from parameters import Parameters
 
 
-class Htm2500lf:
+class HumiditySensorHtm2500lf:
 
     def __init__(self, labjack_connection):
         """

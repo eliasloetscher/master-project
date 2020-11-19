@@ -7,7 +7,6 @@ def measure_all_values(humidity_sensor, hvamp):
     :return: All sensor values
     """
 
-
     humidity = humidity_sensor.read_humidity()
     hv_amp_voltage = hvamp.get_voltage()
     hv_amp_current = hvamp.get_current()

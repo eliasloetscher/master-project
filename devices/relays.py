@@ -4,7 +4,10 @@ from labjack.ljm import LJMError
 
 class Relays:
 
-    def __init__(self):
+    def __init__(self, labjack):
+
+        # init vars
+        self.labjack = labjack
 
         # default n/a. must be set afterwards always with "open" or "closed" (!)
         self.safety_state = "n/a"
@@ -85,3 +88,25 @@ class Relays:
                 return "Success! LAMP relay switched"
             else:
                 raise ValueError
+
+    def switch_off_all_relays(self):
+        """ Use at safety circuit startup to assure the relay states are correctly set.
+
+        :return: True if successful, False if an error occurred.
+        """
+        # Switch off all relays
+        try:
+            # Note: Relays are low-active. 'HIGH' corresponds to 'OFF' (!)
+            self.labjack.write_digital(Parameters.LJ_DIGITAL_OUT_SAFETY_RELAY, "HIGH")
+            self.labjack.write_digital(Parameters.LJ_DIGITAL_OUT_GND_RELAY, "HIGH")
+            self.labjack.write_digital(Parameters.LJ_DIGITAL_OUT_HV_RELAY, "HIGH")
+        except (ValueError, TypeError, LJMError):
+            if Parameters.DEBUG:
+                print("CRITICAL ERROR. ASSURE ALL RELAYS ARE SWITCHED OFF BEFORE GUI STARTUP")
+            return False
+        else:
+            # Init relay states if no error occurred
+            self.safety_state = "open"
+            self.gnd_relay_state = "open"
+            self.hv_relay_state = "open"
+            return True

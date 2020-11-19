@@ -9,19 +9,19 @@ class DevicesFrame:
     None
     """
 
-    def __init__(self, master, gui_functions, labjack, electrometer):
+    def __init__(self, root, labjack, electrometer):
         """ Constructor of the device frame class
 
-        :param master: parent frame/window
-        :param gui_functions: instance of gui_functions used to handle all gui actions
+        :param root: tkinter root instance
         """
 
         # Initialize vars
-        self.master = master
-        self.gui_functions = gui_functions
+        self.root = root
+        self.labjack = labjack
+        self.electrometer = electrometer
 
         # Initialize and place frame
-        self.devices_frame = tk.Frame(self.master, width=430, height=150, highlightbackground="black",
+        self.devices_frame = tk.Frame(self.root, width=430, height=150, highlightbackground="black",
                                       highlightthickness=1)
         self.devices_frame.grid(row=1, padx=20, pady=(0, 20))
         self.devices_frame.grid_propagate(False)  # Avoid frame shrinking to the size of the included elements
@@ -46,7 +46,10 @@ class DevicesFrame:
         # Place electrometer connection button
         tk.Button(self.devices_frame, text="Connect", command=electrometer.connect).place(x=230, y=75)
 
-    def auto_update_labels(self, root, labjack, electrometer):
+        # Start to update labels periodically
+        self.auto_update_labels()
+
+    def auto_update_labels(self):
         """
 
         :param root:
@@ -56,7 +59,7 @@ class DevicesFrame:
         """
 
         # Get labjack connection state and prepare label
-        if labjack.connection_state:
+        if self.labjack.connection_state:
             lj_label_text = "connected"
             lj_label_colour = "green"
         else:
@@ -64,7 +67,7 @@ class DevicesFrame:
             lj_label_colour = "red"
 
         # Get electrometer connection state and prepare label
-        if electrometer.check_connection():
+        if self.electrometer.check_connection():
             em_label_text = "connected"
             em_label_colour = "green"
         else:
@@ -75,4 +78,5 @@ class DevicesFrame:
         self.lj_state_label.configure(text=lj_label_text, fg=lj_label_colour)
         self.em_state_label.configure(text=em_label_text, fg=em_label_colour)
 
-        root.after(1000, lambda: self.auto_update_labels(root, labjack, electrometer))
+        # repeat with a given time interval
+        self.root.after(500, self.auto_update_labels)

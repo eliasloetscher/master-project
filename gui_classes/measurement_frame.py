@@ -15,16 +15,14 @@ class MeasurementFrame:
     None
     """
 
-    def __init__(self, master, gui_functions, hvamp, electrometer, hum_sensor):
+    def __init__(self, root, electrometer, hvamp, hum_sensor):
         """ Constructor of the measurement frame class
 
-        :param master: parent frame/window
-        :param gui_functions: instance of gui_functions used to handle all gui actions
+        :param root: parent frame/window
         """
 
         # Initialize vars
-        self.master = master
-        self.gui_functions = gui_functions
+        self.root = root
 
         self.after_id_volt = None
         self.after_id_current = None
@@ -36,7 +34,7 @@ class MeasurementFrame:
         self.hum_sensor = hum_sensor
 
         # Initialize and place frame
-        self.measurement_frame = tk.Frame(self.master, width=650, height=520, highlightbackground="black",
+        self.measurement_frame = tk.Frame(self.root, width=650, height=520, highlightbackground="black",
                                           highlightthickness=1)
         self.measurement_frame.grid(row=1, column=1, padx=(0, 20), pady=(0, 20), rowspan=3)
         self.measurement_frame.grid_propagate(False)  # Avoid frame shrinking to the size of the included elements
@@ -123,7 +121,7 @@ class MeasurementFrame:
         self.graph_volt.get_tk_widget().place(x=10, y=10)
 
         tk.Button(self.sub_frame_voltage, text="Start", command=lambda: self.update_plot("volt", [])).grid(row=1, padx=(10, 0), pady=(400, 0), sticky="W")
-        tk.Button(self.sub_frame_voltage, text="Stop", command=lambda: self.master.after_cancel(self.after_id_volt)).grid(row=1, column=1, pady=(400, 0), padx=5, sticky="W")
+        tk.Button(self.sub_frame_voltage, text="Stop", command=lambda: self.root.after_cancel(self.after_id_volt)).grid(row=1, column=1, pady=(400, 0), padx=5, sticky="W")
         tk.Button(self.sub_frame_voltage, text="Lin mode", command=lambda: self.linlogmode_voltage.set("lin")).grid(row=1, column=2, padx=(15, 0), pady=(400, 0), sticky="W")
         tk.Button(self.sub_frame_voltage, text="Log mode", command=lambda: self.linlogmode_voltage.set("log")).grid(row=1, column=3, padx=5, pady=(400, 0), sticky="W")
         tk.Label(self.sub_frame_voltage, text="Set interval in ms:").grid(row=1, column=4, pady=(400, 0), padx=5, sticky="W")
@@ -152,7 +150,7 @@ class MeasurementFrame:
         self.graph_current.get_tk_widget().place(x=10, y=10)
 
         tk.Button(self.sub_frame_current, text="Start", command=lambda: self.update_plot("current", [])).grid(row=1, padx=(10, 0), pady=(400, 0), sticky="W")
-        tk.Button(self.sub_frame_current, text="Stop",command=lambda: self.master.after_cancel(self.after_id_current)).grid(row=1, column=1, pady=(400, 0), padx=5, sticky="W")
+        tk.Button(self.sub_frame_current, text="Stop",command=lambda: self.root.after_cancel(self.after_id_current)).grid(row=1, column=1, pady=(400, 0), padx=5, sticky="W")
         tk.Button(self.sub_frame_current, text="Lin mode", command=lambda: self.linlogmode_current.set("lin")).grid(row=1, column=2, padx=(15, 0), pady=(400, 0), sticky="W")
         tk.Button(self.sub_frame_current, text="Log mode", command=lambda: self.linlogmode_current.set("log")).grid(row=1, column=3, padx=5, pady=(400, 0), sticky="W")
         tk.Label(self.sub_frame_current, text="Set interval in ms:").grid(row=1, column=4, pady=(400, 0), padx=5,sticky="W")
@@ -181,7 +179,7 @@ class MeasurementFrame:
         self.graph_temp.get_tk_widget().place(x=10, y=10)
 
         tk.Button(self.sub_frame_temp, text="Start", command=lambda: self.update_plot("temp", [])).grid(row=1, padx=(10, 0), pady=(400, 0), sticky="W")
-        tk.Button(self.sub_frame_temp, text="Stop",command=lambda: self.master.after_cancel(self.after_id_temp)).grid(row=1, column=1, pady=(400, 0), padx=5, sticky="W")
+        tk.Button(self.sub_frame_temp, text="Stop",command=lambda: self.root.after_cancel(self.after_id_temp)).grid(row=1, column=1, pady=(400, 0), padx=5, sticky="W")
         tk.Button(self.sub_frame_temp, text="Lin mode", command=lambda: self.linlogmode_temp.set("lin")).grid(row=1, column=2, padx=(15, 0), pady=(400, 0), sticky="W")
         tk.Button(self.sub_frame_temp, text="Log mode", command=lambda: self.linlogmode_temp.set("log")).grid(row=1, column=3, padx=5, pady=(400, 0), sticky="W")
         tk.Label(self.sub_frame_temp, text="Set interval in ms:").grid(row=1, column=4, pady=(400, 0), padx=5,sticky="W")
@@ -211,7 +209,7 @@ class MeasurementFrame:
 
         tk.Button(self.sub_frame_humidity, text="Start", command=lambda: self.update_plot("humidity", [])).grid(row=1, padx=(10, 0), pady=(400, 0), sticky="W")
         tk.Button(self.sub_frame_humidity, text="Stop",
-                  command=lambda: self.master.after_cancel(self.after_id_humidity)).grid(row=1, column=1, pady=(400, 0),padx=5, sticky="W")
+                  command=lambda: self.root.after_cancel(self.after_id_humidity)).grid(row=1, column=1, pady=(400, 0),padx=5, sticky="W")
         tk.Button(self.sub_frame_humidity, text="Lin mode", command=lambda: self.linlogmode_humidity.set("lin")).grid(row=1, column=2, padx=(15, 0), pady=(400, 0), sticky="W")
         tk.Button(self.sub_frame_humidity, text="Log mode", command=lambda: self.linlogmode_humidity.set("log")).grid(row=1, column=3, padx=5, pady=(400, 0), sticky="W")
         tk.Label(self.sub_frame_humidity, text="Set interval in ms:").grid(row=1, column=4, pady=(400, 0), padx=5, sticky="W")
@@ -261,13 +259,13 @@ class MeasurementFrame:
         objects[0].draw()
 
         if plot == "volt":
-            self.after_id_volt = self.master.after(self.meas_interval_voltage, lambda: self.update_plot(plot, data[0]))
+            self.after_id_volt = self.root.after(self.meas_interval_voltage, lambda: self.update_plot(plot, data[0]))
         elif plot == "current":
-            self.after_id_current = self.master.after(self.meas_interval_current, lambda: self.update_plot(plot, data[0]))
+            self.after_id_current = self.root.after(self.meas_interval_current, lambda: self.update_plot(plot, data[0]))
         elif plot == "temp":
-            self.after_id_temp = self.master.after(self.meas_interval_temp, lambda: self.update_plot(plot, data[0]))
+            self.after_id_temp = self.root.after(self.meas_interval_temp, lambda: self.update_plot(plot, data[0]))
         elif plot == "humidity":
-            self.after_id_humidity = self.master.after(self.meas_interval_humidity, lambda: self.update_plot(plot, data[0]))
+            self.after_id_humidity = self.root.after(self.meas_interval_humidity, lambda: self.update_plot(plot, data[0]))
         else:
             raise ValueError
 
