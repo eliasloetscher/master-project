@@ -27,3 +27,12 @@ def measure_current(electrometer):
         print(result_in_picoampere)
     return result_in_picoampere
 
+
+def measure_temperature(electrometer):
+    result = electrometer.get_temperature()
+    result_in_celsius = round(float(result), 2)
+    if Parameters.DEBUG:
+        print(result_in_celsius)
+    return result_in_celsius
+
+

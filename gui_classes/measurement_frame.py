@@ -2,6 +2,7 @@ import tkinter as tk
 import tkinter.messagebox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+import mviss_module.measure_module as measure
 import threading
 import time
 
@@ -14,7 +15,7 @@ class MeasurementFrame:
     None
     """
 
-    def __init__(self, master, gui_functions, hvamp):
+    def __init__(self, master, gui_functions, hvamp, electrometer, hum_sensor):
         """ Constructor of the measurement frame class
 
         :param master: parent frame/window
@@ -26,7 +27,13 @@ class MeasurementFrame:
         self.gui_functions = gui_functions
 
         self.after_id_volt = None
+        self.after_id_current = None
+        self.after_id_temp = None
+        self.after_id_humidity = None
+
         self.hvamp = hvamp
+        self.electrometer = electrometer
+        self.hum_sensor = hum_sensor
 
         # Initialize and place frame
         self.measurement_frame = tk.Frame(self.master, width=700, height=520, highlightbackground="black",
@@ -60,99 +67,223 @@ class MeasurementFrame:
         # Initialize sub frames
         self.sub_frame_overview = tk.Frame(self.measurement_frame, width=600, height=450)
         self.sub_frame_overview.grid(row=3, padx=10, sticky="W")
-        self.sub_frame_voltage = tk.Frame(self.measurement_frame, width=650, height=450, bg="blue", highlightbackground="black",
-                                          highlightthickness=1)
-        self.sub_frame_current = tk.Frame(self.measurement_frame, width=600, height=450)
-        self.sub_frame_temperature = tk.Frame(self.measurement_frame, width=600, height=450)
-        self.sub_frame_humidity = tk.Frame(self.measurement_frame, width=600, height=450)
+        self.sub_frame_voltage = tk.Frame(self.measurement_frame, width=650, height=450)
+        self.sub_frame_current = tk.Frame(self.measurement_frame, width=650, height=450)
+        self.sub_frame_temp = tk.Frame(self.measurement_frame, width=650, height=450)
+        self.sub_frame_humidity = tk.Frame(self.measurement_frame, width=650, height=450)
 
+        #self.sub_frame_overview.grid_propagate(False)
         self.sub_frame_voltage.grid_propagate(False)
-
+        self.sub_frame_current.grid_propagate(False)
+        self.sub_frame_temp.grid_propagate(False)
+        self.sub_frame_humidity.grid_propagate(False)
 
         # ------------- Sub Frame: Overview ------------ #
         tk.Label(self.sub_frame_overview, text="Overview").grid(padx=(10, 0), sticky="W")
 
-        # ------------- Sub Frame: Voltage ------------ #
+        #####################################################
+        # --------------- Sub Frame: Voltage -------------- #
+        #####################################################
         self.linlogmode_voltage = tk.StringVar()
         self.linlogmode_voltage.set("lin")
         self.meas_interval_voltage = 1000
 
-        self.fig = Figure(figsize=(5, 3.5), facecolor="gray", frameon=False, tight_layout=True)
+        self.fig_volt = Figure(figsize=(6.2, 3.8), frameon=False, tight_layout=True)
 
-        self.ax = self.fig.add_subplot(111)
-        self.ax.set_title("Voltage Plot")
-        self.ax.set_xlabel("Time in s")
-        self.ax.set_ylabel("Voltage in V")
-        self.ax.grid()
+        self.ax_volt = self.fig_volt.add_subplot(111)
+        self.ax_volt.set_title("Voltage Plot")
+        self.ax_volt.set_xlabel("Time in s")
+        self.ax_volt.set_ylabel("Voltage in V")
+        self.ax_volt.grid()
 
-        self.datapoints = []
+        self.data_volt = []
 
-        self.graph = FigureCanvasTkAgg(self.fig, master=self.sub_frame_voltage)
-        self.graph.get_tk_widget().place(x=10, y=20)
+        self.graph_volt = FigureCanvasTkAgg(self.fig_volt, master=self.sub_frame_voltage)
+        self.graph_volt.get_tk_widget().place(x=10, y=10)
 
-        tk.Button(self.sub_frame_voltage, text="Start", command=self.start_voltage_plot).grid(row=1, padx=(10, 0), pady=(400, 0), sticky="S")
-        tk.Button(self.sub_frame_voltage, text="Stop", command=lambda: self.master.after_cancel(self.after_id_volt)).grid(row=1, column=1, pady=10, sticky="W")
-        tk.Button(self.sub_frame_voltage, text="Lin mode", command=lambda: self.linlogmode_voltage.set("lin")).grid(row=1, column=2, pady=10, sticky="W")
-        tk.Button(self.sub_frame_voltage, text="Log mode", command=lambda: self.linlogmode_voltage.set("log")).grid(row=1, column=3, pady=10, sticky="W")
+        tk.Button(self.sub_frame_voltage, text="Start", command=lambda: self.update_plot("volt", [])).grid(row=1, padx=(10, 0), pady=(400, 0), sticky="W")
+        tk.Button(self.sub_frame_voltage, text="Stop", command=lambda: self.master.after_cancel(self.after_id_volt)).grid(row=1, column=1, pady=(400, 0), padx=5, sticky="W")
+        tk.Button(self.sub_frame_voltage, text="Lin mode", command=lambda: self.linlogmode_voltage.set("lin")).grid(row=1, column=2, padx=(15, 0), pady=(400, 0), sticky="W")
+        tk.Button(self.sub_frame_voltage, text="Log mode", command=lambda: self.linlogmode_voltage.set("log")).grid(row=1, column=3, padx=5, pady=(400, 0), sticky="W")
+        tk.Label(self.sub_frame_voltage, text="Set interval in ms:").grid(row=1, column=4, pady=(400, 0), padx=5, sticky="W")
         self.meas_interval_voltage_input = tk.Entry(self.sub_frame_voltage, width=6)
-        self.meas_interval_voltage_input.grid(row=1, column=4, padx=(10, 0), pady=10, sticky="W")
-        tk.Button(self.sub_frame_voltage, text="Set", command=self.update_meas_interval_voltage).grid(row=1, column=5, padx=(10, 0), pady=10, sticky="W")
+        self.meas_interval_voltage_input.grid(row=1, column=5, pady=(400, 0), sticky="W")
+        tk.Button(self.sub_frame_voltage, text="Set", command=self.update_meas_interval_voltage).grid(row=1, column=6, padx=10, pady=(400, 0), sticky="W")
 
-        # ------------- Sub Frame: Current ------------ #
-        tk.Label(self.sub_frame_current, text="Live current plot").grid(padx=(10, 0), sticky="W")
+        #####################################################
+        # --------------- Sub Frame: Current -------------- #
+        #####################################################
+        self.linlogmode_current = tk.StringVar()
+        self.linlogmode_current.set("lin")
+        self.meas_interval_current = 1000
 
-        # ------------- Sub Frame: Temperature ------------ #
-        tk.Label(self.sub_frame_temperature, text="Live temperature plot").grid(padx=(10, 0), sticky="W")
+        self.fig_current = Figure(figsize=(6.2, 3.8), frameon=False, tight_layout=True)
 
-        # ------------- Sub Frame: Humidity ------------ #
-        tk.Label(self.sub_frame_humidity, text="Live humidity plot").grid(padx=(10, 0), sticky="W")
+        self.ax_current = self.fig_current.add_subplot(111)
+        self.ax_current.set_title("Current Plot")
+        self.ax_current.set_xlabel("Time in s")
+        self.ax_current.set_ylabel("Current in V")
+        self.ax_current.grid()
 
-    def update_meas_interval_voltage(self):
-        if int(self.meas_interval_voltage_input.get()) < 200:
-            print("Error! Measurement interval too small")
-            tk.messagebox.showerror("Error", "Measurement too small. Must be > 100 ms.")
+        self.data_current = []
+
+        self.graph_current = FigureCanvasTkAgg(self.fig_current, master=self.sub_frame_current)
+        self.graph_current.get_tk_widget().place(x=10, y=10)
+
+        tk.Button(self.sub_frame_current, text="Start", command=lambda: self.update_plot("current", [])).grid(row=1, padx=(10, 0), pady=(400, 0), sticky="W")
+        tk.Button(self.sub_frame_current, text="Stop",command=lambda: self.master.after_cancel(self.after_id_current)).grid(row=1, column=1, pady=(400, 0), padx=5, sticky="W")
+        tk.Button(self.sub_frame_current, text="Lin mode", command=lambda: self.linlogmode_current.set("lin")).grid(row=1, column=2, padx=(15, 0), pady=(400, 0), sticky="W")
+        tk.Button(self.sub_frame_current, text="Log mode", command=lambda: self.linlogmode_current.set("log")).grid(row=1, column=3, padx=5, pady=(400, 0), sticky="W")
+        tk.Label(self.sub_frame_current, text="Set interval in ms:").grid(row=1, column=4, pady=(400, 0), padx=5,sticky="W")
+        self.meas_interval_current_input = tk.Entry(self.sub_frame_current, width=6)
+        self.meas_interval_current_input.grid(row=1, column=5, pady=(400, 0), sticky="W")
+        tk.Button(self.sub_frame_current, text="Set", command=self.update_meas_interval_current).grid(row=1, column=6, padx=10, pady=(400, 0), sticky="W")
+
+        #####################################################
+        # -------------- Sub Frame: Temperature ----------- #
+        #####################################################
+        self.linlogmode_temp = tk.StringVar()
+        self.linlogmode_temp.set("lin")
+        self.meas_interval_temp = 1000
+
+        self.fig_temp = Figure(figsize=(6.2, 3.8), frameon=False, tight_layout=True)
+
+        self.ax_temp = self.fig_temp.add_subplot(111)
+        self.ax_temp.set_title("Temperature Plot")
+        self.ax_temp.set_xlabel("Time in s")
+        self.ax_temp.set_ylabel("Temperature in °C")
+        self.ax_temp.grid()
+
+        self.data_temp = []
+
+        self.graph_temp = FigureCanvasTkAgg(self.fig_temp, master=self.sub_frame_temp)
+        self.graph_temp.get_tk_widget().place(x=10, y=10)
+
+        tk.Button(self.sub_frame_temp, text="Start", command=lambda: self.update_plot("temp", [])).grid(row=1, padx=(10, 0), pady=(400, 0), sticky="W")
+        tk.Button(self.sub_frame_temp, text="Stop",command=lambda: self.master.after_cancel(self.after_id_temp)).grid(row=1, column=1, pady=(400, 0), padx=5, sticky="W")
+        tk.Button(self.sub_frame_temp, text="Lin mode", command=lambda: self.linlogmode_temp.set("lin")).grid(row=1, column=2, padx=(15, 0), pady=(400, 0), sticky="W")
+        tk.Button(self.sub_frame_temp, text="Log mode", command=lambda: self.linlogmode_temp.set("log")).grid(row=1, column=3, padx=5, pady=(400, 0), sticky="W")
+        tk.Label(self.sub_frame_temp, text="Set interval in ms:").grid(row=1, column=4, pady=(400, 0), padx=5,sticky="W")
+        self.meas_interval_temp_input = tk.Entry(self.sub_frame_temp, width=6)
+        self.meas_interval_temp_input.grid(row=1, column=5, pady=(400, 0), sticky="W")
+        tk.Button(self.sub_frame_temp, text="Set", command=self.update_meas_interval_temp).grid(row=1, column=6, padx=10, pady=(400, 0), sticky="W")
+
+        #####################################################
+        # --------------- Sub Frame: Humidity -------------- #
+        #####################################################
+        self.linlogmode_humidity = tk.StringVar()
+        self.linlogmode_humidity.set("lin")
+        self.meas_interval_humidity = 1000
+
+        self.fig_humidity = Figure(figsize=(6.2, 3.8), frameon=False, tight_layout=True)
+
+        self.ax_humidity = self.fig_humidity.add_subplot(111)
+        self.ax_humidity.set_title("Relative Humidity Plot")
+        self.ax_humidity.set_xlabel("Time in s")
+        self.ax_humidity.set_ylabel("RH in %")
+        self.ax_humidity.grid()
+
+        self.data_humidity = []
+
+        self.graph_humidity = FigureCanvasTkAgg(self.fig_humidity, master=self.sub_frame_humidity)
+        self.graph_humidity.get_tk_widget().place(x=10, y=10)
+
+        tk.Button(self.sub_frame_humidity, text="Start", command=lambda: self.update_plot("humidity", [])).grid(row=1, padx=(10, 0), pady=(400, 0), sticky="W")
+        tk.Button(self.sub_frame_humidity, text="Stop",
+                  command=lambda: self.master.after_cancel(self.after_id_humidity)).grid(row=1, column=1, pady=(400, 0),padx=5, sticky="W")
+        tk.Button(self.sub_frame_humidity, text="Lin mode", command=lambda: self.linlogmode_humidity.set("lin")).grid(row=1, column=2, padx=(15, 0), pady=(400, 0), sticky="W")
+        tk.Button(self.sub_frame_humidity, text="Log mode", command=lambda: self.linlogmode_humidity.set("log")).grid(row=1, column=3, padx=5, pady=(400, 0), sticky="W")
+        tk.Label(self.sub_frame_humidity, text="Set interval in ms:").grid(row=1, column=4, pady=(400, 0), padx=5, sticky="W")
+        self.meas_interval_humidity_input = tk.Entry(self.sub_frame_humidity, width=6)
+        self.meas_interval_humidity_input.grid(row=1, column=5, pady=(400, 0), sticky="W")
+        tk.Button(self.sub_frame_humidity, text="Set", command=self.update_meas_interval_humidity).grid(row=1, column=6, padx=10, pady=(400, 0),sticky="W")
+
+    def update_plot(self, plot, datapoints):
+        objects, data, settings = [], [], []
+        if plot == "volt":
+            objects = [self.graph_volt, self.ax_volt]
+            data = [datapoints, self.hvamp.get_voltage()]
+            settings = [self.linlogmode_voltage.get(), "Datapoints", "Voltage in V"]
+        elif plot == "current":
+            objects = [self.graph_current, self.ax_current]
+            data = [datapoints, measure.measure_current(self.electrometer)]
+            settings = [self.linlogmode_current.get(), "Datapoints", "Current in pA"]
+        elif plot == "temp":
+            objects = [self.graph_temp, self.ax_temp]
+            data = [datapoints, measure.measure_temperature(self.electrometer)]
+            settings = [self.linlogmode_temp.get(), "Datapoints", "Temperature in °C"]
+        elif plot == "humidity":
+            objects = [self.graph_humidity, self.ax_humidity]
+            data = [datapoints, self.hum_sensor.read_humidity()]
+            settings = [self.linlogmode_humidity.get(), "Datapoints", "RH in %"]
         else:
-            self.meas_interval_voltage = int(self.meas_interval_voltage_input.get())
+            raise ValueError
 
-    def start_voltage_plot(self):
-        self.ax.cla()
-        self.update_voltage_plot()
+        if len(data[0]) >= 50:
+            data[0] = data[0][1:len(data[0])]
 
-    def update_voltage_plot(self):
+        data[0].append(data[1])
+        print(data)
 
-        if len(self.datapoints) >= 50:
-            self.datapoints = self.datapoints[1:len(self.datapoints)]
+        objects[1].cla()
+        objects[1].set_xlabel(settings[1])
+        objects[1].set_ylabel(settings[2])
+        objects[1].grid()
 
-        value = self.hvamp.get_voltage()
-        print(value)
-
-        self.datapoints.append(value)
-
-        self.ax.cla()
-        self.ax.set_xlabel("Time in s")
-        self.ax.set_ylabel("Voltage in V")
-        self.ax.grid()
-
-        if self.linlogmode_voltage.get() == "lin":
-            self.ax.plot(range(len(self.datapoints)), self.datapoints)
-            print("plot lin")
-        elif self.linlogmode_voltage.get() == "log":
-            self.ax.semilogy(range(len(self.datapoints)), self.datapoints)
-            print("plot log")
+        if settings[0] == "lin":
+            objects[1].plot(range(len(data[0])), data[0])
+        elif settings[0] == "log":
+            objects[1].semilogy(range(len(data[0])), data[0])
         else:
             print("Plot Error. Lin/log mode value error.")
 
-        self.graph.draw()
+        objects[0].draw()
 
-        print(self.after_id_volt)
+        if plot == "volt":
+            self.after_id_volt = self.master.after(self.meas_interval_voltage, lambda: self.update_plot(plot, data[0]))
+        elif plot == "current":
+            self.after_id_current = self.master.after(self.meas_interval_current, lambda: self.update_plot(plot, data[0]))
+        elif plot == "temp":
+            self.after_id_temp = self.master.after(self.meas_interval_temp, lambda: self.update_plot(plot, data[0]))
+        elif plot == "humidity":
+            self.after_id_humidity = self.master.after(self.meas_interval_humidity, lambda: self.update_plot(plot, data[0]))
+        else:
+            raise ValueError
 
-        self.after_id_volt = self.master.after(self.meas_interval_voltage, self.update_voltage_plot)
+    def update_meas_interval_voltage(self):
+        if int(self.meas_interval_voltage_input.get()) < 100:
+            print("Error! Measurement interval too small")
+            tk.messagebox.showerror("Error", "Measurement too small. Must be >= 100 ms.")
+        else:
+            self.meas_interval_voltage = int(self.meas_interval_voltage_input.get())
+
+    def update_meas_interval_current(self):
+        if int(self.meas_interval_current_input.get()) < 100:
+            print("Error! Measurement interval too small")
+            tk.messagebox.showerror("Error", "Measurement too small. Must be >= 100 ms.")
+        else:
+            self.meas_interval_current = int(self.meas_interval_current_input.get())
+
+    def update_meas_interval_temp(self):
+        if int(self.meas_interval_temp_input.get()) < 100:
+            print("Error! Measurement interval too small")
+            tk.messagebox.showerror("Error", "Measurement too small. Must be >= 100 ms.")
+        else:
+            self.meas_interval_temp = int(self.meas_interval_temp_input.get())
+
+    def update_meas_interval_humidity(self):
+        if int(self.meas_interval_humidity_input.get()) < 100:
+            print("Error! Measurement interval too small")
+            tk.messagebox.showerror("Error", "Measurement too small. Must be >= 100 ms.")
+        else:
+            self.meas_interval_humidity = int(self.meas_interval_humidity_input.get())
 
     def show_sub_frame_overview(self):
         self.sub_frame_overview.grid(row=3, padx=10, sticky="W", columnspan=4)
+        self.sub_frame_overview.grid_propagate(False)
         self.sub_frame_voltage.grid_forget()
         self.sub_frame_current.grid_forget()
-        self.sub_frame_temperature.grid_forget()
+        self.sub_frame_temp.grid_forget()
         self.sub_frame_humidity.grid_forget()
 
     def show_sub_frame_voltage(self):
@@ -160,29 +291,32 @@ class MeasurementFrame:
         self.sub_frame_voltage.grid(row=3, sticky="W", columnspan=6)
         self.sub_frame_voltage.grid_propagate(False)
         self.sub_frame_current.grid_forget()
-        self.sub_frame_temperature.grid_forget()
+        self.sub_frame_temp.grid_forget()
         self.sub_frame_humidity.grid_forget()
 
     def show_sub_frame_current(self):
         self.sub_frame_overview.grid_forget()
         self.sub_frame_voltage.grid_forget()
-        self.sub_frame_current.grid(row=3, padx=10, sticky="W", columnspan=4)
-        self.sub_frame_temperature.grid_forget()
+        self.sub_frame_current.grid(row=3, sticky="W", columnspan=6)
+        self.sub_frame_current.grid_propagate(False)
+        self.sub_frame_temp.grid_forget()
         self.sub_frame_humidity.grid_forget()
 
     def show_sub_frame_temperature(self):
         self.sub_frame_overview.grid_forget()
         self.sub_frame_voltage.grid_forget()
         self.sub_frame_current.grid_forget()
-        self.sub_frame_temperature.grid(row=3, padx=10, sticky="W", columnspan=4)
+        self.sub_frame_temp.grid(row=3, sticky="W", columnspan=6)
+        self.sub_frame_temp.grid_propagate(False)
         self.sub_frame_humidity.grid_forget()
 
     def show_sub_frame_humidity(self):
         self.sub_frame_overview.grid_forget()
         self.sub_frame_voltage.grid_forget()
         self.sub_frame_current.grid_forget()
-        self.sub_frame_temperature.grid_forget()
-        self.sub_frame_humidity.grid(row=3, padx=10, sticky="W", columnspan=4)
+        self.sub_frame_temp.grid_forget()
+        self.sub_frame_humidity.grid(row=3, sticky="W", columnspan=6)
+        self.sub_frame_humidity.grid_propagate(False)
 
 
 

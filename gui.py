@@ -102,7 +102,7 @@ devices_frame = DevicesFrame(root, gui_functions, lj_connection, electrometer)
 safety_circuit_frame = SafetyCircuitFrame(root, gui_functions, lj_connection, relay_control)
 control_frame = ControlFrame(root, gui_functions, lj_connection, relay_control, hvamp)
 
-measurement_frame = MeasurementFrame(root, gui_functions, hvamp)
+measurement_frame = MeasurementFrame(root, gui_functions, hvamp, electrometer, humidity_sensor)
 recording_frame = RecordingFrame(root, gui_functions)
 
 # start label autoupdate
