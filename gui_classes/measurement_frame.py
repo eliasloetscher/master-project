@@ -2,9 +2,11 @@ import tkinter as tk
 import tkinter.messagebox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+import matplotlib.ticker as ticker
 import utilities.measure_module as measure
 import threading
 import time
+from parameters import Parameters
 
 
 class MeasurementFrame:
@@ -24,6 +26,7 @@ class MeasurementFrame:
         # Initialize vars
         self.root = root
 
+        self.after_id_overview = None
         self.after_id_volt = None
         self.after_id_current = None
         self.after_id_temp = None
@@ -63,21 +66,22 @@ class MeasurementFrame:
         rad5.grid(row=2, column=4, padx=(15, 100), sticky="W")
 
         # Initialize sub frames
-        self.sub_frame_overview = tk.Frame(self.measurement_frame, width=650, height=450)
+        self.sub_frame_overview = tk.Frame(self.measurement_frame, width=645, height=450)
         self.sub_frame_overview.grid(row=3, sticky="W", columnspan=6)
-        self.sub_frame_voltage = tk.Frame(self.measurement_frame, width=650, height=450)
-        self.sub_frame_current = tk.Frame(self.measurement_frame, width=650, height=450)
-        self.sub_frame_temp = tk.Frame(self.measurement_frame, width=650, height=450)
-        self.sub_frame_humidity = tk.Frame(self.measurement_frame, width=650, height=450)
+        self.sub_frame_voltage = tk.Frame(self.measurement_frame, width=645, height=450)
+        self.sub_frame_current = tk.Frame(self.measurement_frame, width=645, height=450)
+        self.sub_frame_temp = tk.Frame(self.measurement_frame, width=645, height=450)
+        self.sub_frame_humidity = tk.Frame(self.measurement_frame, width=645, height=450)
 
-        #self.sub_frame_overview.grid_propagate(False)
         self.sub_frame_overview.grid_propagate(False)
         self.sub_frame_voltage.grid_propagate(False)
         self.sub_frame_current.grid_propagate(False)
         self.sub_frame_temp.grid_propagate(False)
         self.sub_frame_humidity.grid_propagate(False)
 
-        # ------------- Sub Frame: Overview ------------ #
+        #####################################################
+        # --------------- Sub Frame: Overview -------------- #
+        #####################################################
         self.fig_overview = Figure(figsize=(6.2, 3.8), frameon=False, tight_layout=True)
 
         self.ax_overview_volt = self.fig_overview.add_subplot(221)
@@ -95,10 +99,15 @@ class MeasurementFrame:
         self.ax_overview_temp.grid()
         self.ax_overview_humidity.grid()
 
+        # init overview data [[data_voltage], [data_current], [data_temp], [data_humidity]]
+        self.overview_data = [[], [], [], []]
+
         self.graph_overview = FigureCanvasTkAgg(self.fig_overview, master=self.sub_frame_overview)
         self.graph_overview.get_tk_widget().place(x=10, y=10)
 
-
+        tk.Button(self.sub_frame_overview, text="Start", command=self.update_overview).grid(row=1, padx=(10, 0), pady=(400, 0), sticky="W")
+        tk.Button(self.sub_frame_overview, text="Stop", command=lambda: self.root.after_cancel(self.after_id_overview)).grid(
+            row=1, column=1, pady=(400, 0), padx=5, sticky="W")
 
         #####################################################
         # --------------- Sub Frame: Voltage -------------- #
@@ -216,6 +225,43 @@ class MeasurementFrame:
         self.meas_interval_humidity_input = tk.Entry(self.sub_frame_humidity, width=6)
         self.meas_interval_humidity_input.grid(row=1, column=5, pady=(400, 0), sticky="W")
         tk.Button(self.sub_frame_humidity, text="Set", command=self.update_meas_interval_humidity).grid(row=1, column=6, padx=10, pady=(400, 0),sticky="W")
+
+    def update_overview(self):
+
+        # initialize subplot list
+        subplots = [self.ax_overview_volt, self.ax_overview_current, self.ax_overview_temp, self.ax_overview_humidity]
+
+        # initialize text settings
+        titles = ["Voltage in V", "Current in pA", "Temperature in °C", "Relative humidity in %"]
+        x_labels = ["Datapoints", "Datapoints", "Datapoints", "Datapoints"]
+
+        # get new sensor values
+        values = measure.measure_all_values(self.electrometer, self.hvamp, self.hum_sensor)
+        for i in range(len(self.overview_data)):
+            # shorten data lists to a maximum of 50 elements
+            if len(self.overview_data[i]) >= 50:
+                self.overview_data[i] = self.overview_data[i][1:len(self.overview_data[i])]
+
+            # append new values
+            self.overview_data[i].append(values[i])
+
+        if Parameters.DEBUG:
+            print(self.overview_data)
+
+        # update plots
+        for i in range(len(subplots)):
+            subplots[i].cla()
+            subplots[i].set_title(titles[i])
+            subplots[i].set_xlabel(x_labels[i])
+            subplots[i].yaxis.set_major_formatter(ticker.FormatStrFormatter('%0.1f'))
+            subplots[i].grid()
+            subplots[i].plot(range(len(self.overview_data[i])), self.overview_data[i])
+
+        # render plot
+        self.graph_overview.draw()
+
+        # repeat with a given interval
+        self.after_id_overview = self.root.after(500, self.update_overview)
 
     def update_plot(self, plot, datapoints):
         objects, data, settings = [], [], []

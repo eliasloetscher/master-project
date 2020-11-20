@@ -7,10 +7,10 @@ def measure_all_values(electrometer, hvamp, humidity_sensor):
     :return: All sensor values
     """
 
-    humidity = humidity_sensor.read_humidity()
-    hv_amp_voltage = hvamp.get_voltage()
-    electrometer_current = electrometer.get_current()
-    electrometer_temperature = electrometer.get_temperature()
+    hv_amp_voltage = round(measure_voltage(hvamp), 2)
+    electrometer_current = round(measure_current(electrometer), 2)
+    electrometer_temperature = round(measure_temperature(electrometer), 2)
+    humidity = round(measure_humidity(humidity_sensor), 2)
 
     values = [hv_amp_voltage, electrometer_current, electrometer_temperature, humidity]
 
@@ -18,6 +18,10 @@ def measure_all_values(electrometer, hvamp, humidity_sensor):
         print("measured values: ", values)
 
     return values
+
+
+def measure_voltage(hvamp):
+    return hvamp.get_voltage()
 
 
 def measure_current(electrometer):
@@ -36,3 +40,5 @@ def measure_temperature(electrometer):
     return result_in_celsius
 
 
+def measure_humidity(hum_sensor):
+    return hum_sensor.read_humidity()
