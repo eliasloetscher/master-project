@@ -49,7 +49,7 @@ def gui():
     SafetyCircuitFrame(root, labjack, relays)
     ControlFrame(root, labjack, relays, electrometer, hvamp)
     MeasurementFrame(root, electrometer, hvamp, humidity_sensor)
-    RecordingFrame(root)
+    RecordingFrame(root, electrometer, hvamp, humidity_sensor)
 
     # Execute GUI
     root.mainloop()

@@ -31,7 +31,7 @@ class ControlFrame:
 
         # Set and place frame title
         control_frame_title = tk.Label(self.control_frame, text="Control", font="Helvetica 14 bold")
-        control_frame_title.grid(padx=5, pady=5)
+        control_frame_title.grid(padx=5, pady=5, sticky="W")
 
         # Place HV relay state label
         tk.Label(self.control_frame, text="HV relay:").grid(row=1, sticky="W", padx=(10, 0))
@@ -79,7 +79,7 @@ class ControlFrame:
 
         # Initialize high voltage state frame
         self.state_frame = tk.Frame(self.control_frame, width=50, height=50, highlightthickness=1, highlightbackground="black", bg="green")
-        self.state_frame.place(x=370, y=180)
+        self.state_frame.place(x=360, y=230)
 
         # Start to update labels periodically
         self.auto_update_labels()

@@ -4,6 +4,7 @@ import time
 import datetime
 from parameters import Parameters
 from pathlib import Path
+import utilities.measure_module as measure
 
 
 # Global vars
@@ -14,24 +15,24 @@ filename = ""  # Leave empty. filename is generated automatically at runtime.
 debug = Parameters.DEBUG
 
 
-def create_logfile(test_type):
+def create_logfile(name):
     """
     Creates a valid filename according to given parameters. Writes header. Saved at global var LOCATION
-    :param test_type: Selected test type
+    :param name: user input file name
     :return: None
     """
     # generate filename
     global filename
-    filename = "Type-" + str(test_type) + "-Num_1" + ".txt"
+    filename = str(name) + ".txt"
     path = Path(LOCATION + filename)
     if debug:
         print("Filename:", filename)
         print("Location:", path)
 
     # Check if file already exists. If so, increase number until filename does not exist
-    i = 2
+    i = 1
     while path.exists():
-        filename = "Type-" + str(test_type) + "-Num_" + str(i) + ".txt"
+        filename = str(name) + "_Num_" + str(i) + ".txt"
         path = Path(LOCATION + filename)
         i += 1
         if debug:
@@ -46,8 +47,20 @@ def create_logfile(test_type):
         logfile.write("Date: " + dt_now.strftime("%d-%m-%Y") + "\n")
         logfile.write("Time: " + dt_now.strftime("%H:%M:%S") + "\n \n")
         logfile.write("TEST INFORMATION" + "\n")
-        logfile.write("Test type: " + str(test_type) + "\n \n")
+        logfile.write("Original filename given by user input: " + str(name) + "\n \n")
         logfile.write("DATA \n")
+
+
+def log_all_values(electrometer, hvamp, humidity_sensor):
+
+    # write variable name line
+    log_message("date, time, absolute_time, voltage, current, temperature, humidity")
+
+    # Get all sensor values
+    values = measure.measure_all_values(electrometer, hvamp, humidity_sensor)
+
+    # Log all sensor values
+    log_values(values)
 
 
 def log_values(value_list):
@@ -115,3 +128,8 @@ def log_message(msg):
         return 0
 
     return 1
+
+
+def finish_logging():
+    global filename
+    filename = ""

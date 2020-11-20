@@ -55,7 +55,7 @@ class SafetyCircuitFrame:
         # Initialize safety state frame
         self.state_frame = tk.Frame(self.safety_circuit_frame, width=50, height=50, highlightbackground="black",
                                     highlightthickness=1, bg="green")
-        self.state_frame.place(x=370, y=100)
+        self.state_frame.place(x=360, y=130)
 
         # Start to update labels periodically
         self.auto_update_labels()
