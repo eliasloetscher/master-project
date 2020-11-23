@@ -2,20 +2,23 @@ import tkinter as tk
 
 
 class DevicesFrame:
-    """ This class implements the gui widget for the device connection.
+    """ This class implements the gui widget for the device section.
 
     Methods
     ---------
-    None
+    auto_update_labels()    Starts to periodically update the gui state labels (device frame)
     """
 
     def __init__(self, root, labjack, electrometer):
-        """ Constructor of the device frame class
+        """ Constructor of the class DevicesFrame
 
+        For the following device parameters, use the corresponding class in the package 'devices'
         :param root: tkinter root instance
+        :param labjack: object for controlling the labjack
+        :param electrometer: object for controlling the electrometer
         """
 
-        # Initialize vars
+        # Initialize class vars
         self.root = root
         self.labjack = labjack
         self.electrometer = electrometer
@@ -24,7 +27,9 @@ class DevicesFrame:
         self.devices_frame = tk.Frame(self.root, width=430, height=150, highlightbackground="black",
                                       highlightthickness=1)
         self.devices_frame.grid(row=1, padx=20, pady=(0, 20))
-        self.devices_frame.grid_propagate(False)  # Avoid frame shrinking to the size of the included elements
+
+        # Avoid frame shrinking to the size of the included elements
+        self.devices_frame.grid_propagate(False)
 
         # Set and place frame title
         devices_frame_title = tk.Label(self.devices_frame, text="Devices", font="Helvetica 14 bold")
@@ -50,15 +55,12 @@ class DevicesFrame:
         self.auto_update_labels()
 
     def auto_update_labels(self):
+        """ Starts to periodically update the gui state labels (device frame)
+
+        :return: None
         """
 
-        :param root:
-        :param labjack:
-        :param electrometer:
-        :return:
-        """
-
-        # Get labjack connection state and prepare label
+        # Get labjack connection state and prepare label text and label colour
         if self.labjack.connection_state:
             lj_label_text = "connected"
             lj_label_colour = "green"
@@ -66,7 +68,7 @@ class DevicesFrame:
             lj_label_text = "disconnected"
             lj_label_colour = "red"
 
-        # Get electrometer connection state and prepare label
+        # Get electrometer connection state and prepare label text and label colour
         if self.electrometer.check_connection():
             em_label_text = "connected"
             em_label_colour = "green"
@@ -78,5 +80,5 @@ class DevicesFrame:
         self.lj_state_label.configure(text=lj_label_text, fg=lj_label_colour)
         self.em_state_label.configure(text=em_label_text, fg=em_label_colour)
 
-        # repeat with a given time interval
+        # Repeat at a given time interval
         self.root.after(500, self.auto_update_labels)

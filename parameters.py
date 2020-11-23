@@ -1,9 +1,17 @@
-# This file defines all parameters which are used in the mviss project
 
 
 class Parameters:
+    """ This class defines all parameters which are used in the mviss resistivity measurement test setup.
 
+    Methods
+    ---------
+    None
+
+    """
     def __init__(self):
+        """ Constructor of the Parameters class.
+
+        """
         pass
 
     # Is a boolean which defines, if the programs should run in debug mode (True) or not (False)
@@ -56,13 +64,3 @@ class Parameters:
     # Labjack tick dac analog out channels for hvamp
     LJ_ANALOG_OUT_HVA_REF = "A"
     LJ_ANALOG_OUT_HVA_CTRL = "B"
-
-
-
-
-
-
-
-
-
-

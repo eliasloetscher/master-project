@@ -36,13 +36,16 @@ def auto_update_safety_circuit(root, labjack, relays):
 
     # Switch off safety relay if S1 or S2 is opened
     if state_s1 == "LOW" or state_s2 == "LOW":
-        relays.switch_relay("SAFETY", "OFF", labjack)
+        if state_safety_relay == "closed":
+            relays.switch_relay("SAFETY", "OFF", labjack)
 
     # Switch signal lamp (note: if state is HIGH, switch is closed!)
     if state_s1 == "HIGH" and state_s2 == "HIGH" and state_safety_relay == "closed":
-        relays.switch_relay("LAMP", "ON", labjack)
+        if relays.lamp_state == "open":
+            relays.switch_relay("LAMP", "ON", labjack)
     else:
-        relays.switch_relay("LAMP", "OFF", labjack)
+        if relays.lamp_state == "closed":
+            relays.switch_relay("LAMP", "OFF", labjack)
 
     # Check safety circuit periodically (given in ms)
     root.after(500, lambda: auto_update_safety_circuit(root, labjack, relays))

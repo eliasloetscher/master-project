@@ -52,6 +52,10 @@ class SafetyCircuitFrame:
         open_button.grid(row=3, column=2, sticky="W", pady=(10, 0), padx=(20, 0))
         close_button.grid(row=3, column=3, sticky="W", pady=(10, 0), padx=(5, 0))
 
+        # Place label for safety_message
+        self.safety_message = tk.Label(self.safety_circuit_frame, text="", fg="red")
+        self.safety_message.grid(row=4, sticky="W", padx=10, pady=(20, 0), columnspan=3)
+
         # Initialize safety state frame
         self.state_frame = tk.Frame(self.safety_circuit_frame, width=50, height=50, highlightbackground="black",
                                     highlightthickness=1, bg="green")
@@ -77,8 +81,15 @@ class SafetyCircuitFrame:
         # Prepare s1 label text
         if s1_state == "HIGH":
             s1_label_text = "closed"
+            # Clear error message
+            if not self.relays.safety_message == "":
+                self.relays.safety_message = ""
+                print("cleared safety error message")
         elif s1_state == "LOW":
             s1_label_text = "open"
+        elif not s1_state:
+            # If labjack is not connected, s1_state is False
+            s1_label_text = "n/a"
         else:
             raise ValueError
 
@@ -87,6 +98,9 @@ class SafetyCircuitFrame:
             s2_label_text = "closed"
         elif s2_state == "LOW":
             s2_label_text = "open"
+        elif not s2_state:
+            # If labjack is not connected, s1_state is False
+            s2_label_text = "n/a"
         else:
             raise ValueError
 
@@ -102,6 +116,8 @@ class SafetyCircuitFrame:
                 label_colours.append("red")
             elif element == "open":
                 label_colours.append("green")
+            elif element == "n/a":
+                label_colours.append("black")
             else:
                 raise ValueError
 
@@ -113,6 +129,7 @@ class SafetyCircuitFrame:
         self.s1_state_label.configure(text=s1_label_text, fg=label_colours[0])
         self.s2_state_label.configure(text=s2_label_text, fg=label_colours[1])
         self.relay_state_label.configure(text=relay_state_text, fg=label_colours[2])
+        self.safety_message.configure(text=self.relays.safety_message)
 
         # Update state frame
         if s1_label_text == 'closed' and s2_label_text == 'closed' and relay_state_text == 'closed':

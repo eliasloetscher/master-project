@@ -1,4 +1,5 @@
 import tkinter as tk
+import tkinter.messagebox
 
 from devices.labjack_t7pro import LabjackConnection
 from devices.electrometer_keysight_b2985a import ElectrometerControl
@@ -15,8 +16,26 @@ from gui_classes.recording_frame import RecordingFrame
 import utilities.safety_circuit as safety
 
 
-def gui():
+def on_closing(root, relays):
+    """ Method which is called if the user explicitly quits the gui, i.e. clicks on the "X" button on top right corner
+
+    :param root: tkinter root instance
+    :param relays: object for controlling the relays (use the corresponding class in the package 'devices'
+    :return: None
     """
+
+    # Ask user for confirmation
+    if tk.messagebox.askokcancel("Quit", "Do you want to quit?"):
+        # Switch off all relays
+        relays.switch_off_all_relays()
+        # Close tkinter instance
+        root.destroy()
+
+
+def gui():
+    """ This is the primary gui function for the mviss resistivity measurements test setup.
+    All required elements such as devices, utilities, and frames are loaded and initialized.
+    Finally, the graphical user interface is started.
 
     :return: None
     """
@@ -51,9 +70,13 @@ def gui():
     MeasurementFrame(root, electrometer, hvamp, humidity_sensor)
     RecordingFrame(root, electrometer, hvamp, humidity_sensor)
 
+    # Introduce closing action with protocol handler
+    root.protocol("WM_DELETE_WINDOW", lambda: on_closing(root, relays))
+
     # Execute GUI
     root.mainloop()
 
 
 if __name__ == "__main__":
+    # Start graphical user interface
     gui()

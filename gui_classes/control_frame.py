@@ -7,16 +7,22 @@ class ControlFrame:
 
     Methods
     ---------
-    None
+    auto_update_labels()    Starts to periodically update the gui state labels (control frame)
+    enable_electrometer()   Enables the amperemeter of the electrometer after the user has confirmed to do so
     """
 
     def __init__(self, root, labjack, relays, electrometer, hvamp):
-        """ Constructor of the control frame class
+        """ Constructor of the class ControlFrame
 
-        :param root: parent frame/window
+        For the following device parameters, use the corresponding class in the package 'devices'
+        :param root: tkinter root instance
+        :param labjack: object for controlling the labjack
+        :param relays: object for controlling the relays
+        :param electrometer: object for controlling the electrometer
+        :param hvamp: object for controlling the high voltage amplifier
         """
 
-        # Initialize vars
+        # Initialize class vars
         self.root = root
         self.labjack = labjack
         self.relays = relays
@@ -27,9 +33,11 @@ class ControlFrame:
         self.control_frame = tk.Frame(self.root, width=430, height=300, highlightbackground="black",
                                       highlightthickness=1)
         self.control_frame.grid(row=3, padx=20, pady=(0, 20), rowspan=2)
-        self.control_frame.grid_propagate(False)  # Avoid frame shrinking to the size of the included elements
 
-        # Set and place frame title
+        # Avoid frame shrinking to the size of the included elements
+        self.control_frame.grid_propagate(False)
+
+        # Set and place the frame title
         control_frame_title = tk.Label(self.control_frame, text="Control", font="Helvetica 14 bold")
         control_frame_title.grid(padx=5, pady=5, sticky="W")
 
@@ -43,7 +51,7 @@ class ControlFrame:
         self.gnd_relay_state_label = tk.Label(self.control_frame, text="n/a")
         self.gnd_relay_state_label.grid(row=2, column=1, sticky="W", pady=(10, 0), padx=(0, 25))
 
-        # Set and place 'close' or 'open' buttons for hv relay
+        # Place 'close' and 'open' button for hv relay
         hv_open_button = tk.Button(self.control_frame, text="Open", width=7,
                                    command=lambda: relays.switch_relay("HV", "OFF", labjack))
         hv_close_button = tk.Button(self.control_frame, text="Close", width=7,
@@ -51,7 +59,7 @@ class ControlFrame:
         hv_open_button.grid(row=1, column=2, sticky="W", pady=(5, 0))
         hv_close_button.grid(row=1, column=3, sticky="W", pady=(5, 0), padx=(5, 0))
 
-        # Set and place 'close' or 'open' buttons for gnd relay
+        # Place 'close' and 'open' buttons for gnd relay
         gnd_open_button = tk.Button(self.control_frame, text="Open", width=7,
                                     command=lambda: relays.switch_relay("GND", "OFF", labjack))
         gnd_close_button = tk.Button(self.control_frame, text="Close", width=7,
@@ -59,7 +67,7 @@ class ControlFrame:
         gnd_open_button.grid(row=2, column=2, sticky="W", pady=(10, 0))
         gnd_close_button.grid(row=2, column=3, sticky="W", pady=(10, 0), padx=(5, 0))
 
-        # Place amperemeter enable/disable
+        # Place buttons for enabling/disabling the amperemeter
         tk.Label(self.control_frame, text="Amperemeter:").grid(row=3, sticky="W", padx=(10, 0), pady=(10, 0))
         self.ampmeter_state_label = tk.Label(self.control_frame, text="n/a")
         self.ampmeter_state_label.grid(row=3, column=1, sticky="W", pady=(10, 0))
@@ -77,7 +85,7 @@ class ControlFrame:
         self.control_message = tk.Label(self.control_frame, text="", fg="red")
         self.control_message.grid(row=5, sticky="W", padx=10, pady=(30, 0), columnspan=3)
 
-        # Initialize high voltage state frame
+        # Initialize high voltage state frame, will be set to a green or red background depending on the state
         self.state_frame = tk.Frame(self.control_frame, width=50, height=50, highlightthickness=1, highlightbackground="black", bg="green")
         self.state_frame.place(x=360, y=230)
 
@@ -85,7 +93,12 @@ class ControlFrame:
         self.auto_update_labels()
 
     def auto_update_labels(self):
-        # Prepare labels
+        """ Starts to periodically update the gui state labels (control frame)
+
+        :return: None
+        """
+
+        # Prepare label text and label colour
         label_text = [self.relays.hv_relay_state, self.relays.gnd_relay_state]
         label_colours = []
         for element in label_text:
@@ -100,20 +113,24 @@ class ControlFrame:
         if len(label_colours) != 2:
             raise ValueError
 
-        # Update labels
+        # Update state labels
         self.hv_relay_state_label.configure(text=label_text[0], fg=label_colours[0])
         self.gnd_relay_state_label.configure(text=label_text[1], fg=label_colours[1])
         self.control_message.configure(text=self.relays.control_message)
 
-        # Update state frame (red if hv relay is closed)
+        # Update state frame (red if hv relay is closed, green otherwise)
         if label_text[0] == 'closed':
             self.state_frame.configure(bg="red")
         else:
             self.state_frame.configure(bg="green")
 
-        # repeat with a given time interval
+        # Repeat at a given time interval
         self.root.after(500, self.auto_update_labels)
 
     def enable_electrometer(self):
+        """ Enables the amperemeter of the electrometer after the user has confirmed to do so
+
+        :return: None
+        """
         if tk.messagebox.showwarning("Warning", "Assure that the current is < 20 mA. \nOtherwise, the device may be damaged. \nProceed?", type="okcancel") == 'ok':
             self.electrometer.enable_current_input()

@@ -89,10 +89,10 @@ class MeasurementFrame:
         self.ax_overview_temp = self.fig_overview.add_subplot(223)
         self.ax_overview_humidity = self.fig_overview.add_subplot(224)
 
-        self.ax_overview_volt.set_title("Voltage")
-        self.ax_overview_current.set_title("Current")
-        self.ax_overview_temp.set_title("Temperature")
-        self.ax_overview_humidity.set_title("Humidity")
+        self.ax_overview_volt.set_title("Voltage in V")
+        self.ax_overview_current.set_title("Current in pA")
+        self.ax_overview_temp.set_title("Temperature in °C")
+        self.ax_overview_humidity.set_title("Humidity in %")
 
         self.ax_overview_volt.grid()
         self.ax_overview_current.grid()

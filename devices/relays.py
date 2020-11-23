@@ -13,9 +13,11 @@ class Relays:
         self.safety_state = "n/a"
         self.hv_relay_state = "n/a"
         self.gnd_relay_state = "n/a"
+        self.lamp_state = "n/a"
 
         # Init message var
         self.control_message = ""
+        self.safety_message = ""
 
     def switch_relay(self, name, state, labjack):
         """ Switch relays
@@ -27,6 +29,10 @@ class Relays:
         :exception ValueError: if name or state don't match keywords
         :return: None
         """
+
+        # Print function call if debug mode on
+        if Parameters.DEBUG:
+            print("Relay class call: ", name, state)
 
         # Check if name is string
         if not isinstance(name, str):
@@ -41,7 +47,18 @@ class Relays:
             if name == 'HV' or name == 'GND':
                 if state == "ON":
                     self.control_message = "Error! Close safety circuit first."
-                    return "Error! Close safety circuit first."
+                    return
+
+        # Check if safety relay is intended to close while Pilz S1 or Pilz S2 is open
+        if name == "SAFETY" and state == "ON":
+            s1_state = self.labjack.read_digital(Parameters.LJ_DIGITAL_IN_PILZ_S1)
+            s2_state = self.labjack.read_digital(Parameters.LJ_DIGITAL_IN_PILZ_S2)
+            if s1_state == "LOW":
+                self.safety_message = "Error! Close Pilz S1 first."
+                return
+            elif s2_state == "LOW":
+                self.safety_message = "Error! Close Pilz S2 first"
+                return
 
         # Check if state is valid and prepare to switch
         if state == 'ON':
@@ -85,6 +102,7 @@ class Relays:
                 self.control_message = ""
                 return "Success! GND relay switched."
             elif name == "LAMP":
+                self.lamp_state = state_to_store
                 return "Success! LAMP relay switched"
             else:
                 raise ValueError
@@ -100,6 +118,7 @@ class Relays:
             self.labjack.write_digital(Parameters.LJ_DIGITAL_OUT_SAFETY_RELAY, "HIGH")
             self.labjack.write_digital(Parameters.LJ_DIGITAL_OUT_GND_RELAY, "HIGH")
             self.labjack.write_digital(Parameters.LJ_DIGITAL_OUT_HV_RELAY, "HIGH")
+            self.labjack.write_digital(Parameters.LJ_DIGITAL_OUT_SIGNAL_LAMP, "HIGH")
         except (ValueError, TypeError, LJMError):
             if Parameters.DEBUG:
                 print("CRITICAL ERROR. ASSURE ALL RELAYS ARE SWITCHED OFF BEFORE GUI STARTUP")
@@ -109,4 +128,5 @@ class Relays:
             self.safety_state = "open"
             self.gnd_relay_state = "open"
             self.hv_relay_state = "open"
+            self.lamp_state = "open"
             return True
