@@ -71,8 +71,10 @@ class ControlFrame:
         tk.Label(self.control_frame, text="Amperemeter:").grid(row=3, sticky="W", padx=(10, 0), pady=(10, 0))
         self.ampmeter_state_label = tk.Label(self.control_frame, text="n/a")
         self.ampmeter_state_label.grid(row=3, column=1, sticky="W", pady=(10, 0))
-        tk.Button(self.control_frame, text="Enable", width=7, command=self.enable_electrometer).grid(row=3, column=2, pady=(10, 0), sticky="W")
-        tk.Button(self.control_frame, text="Disable", width=7, command=self.electrometer.disable_current_input).grid(row=3, column=3, padx=(5, 0), pady=(10, 0), sticky="W")
+        en = tk.Button(self.control_frame, text="Enable", width=7, command=self.enable_electrometer)
+        dis = tk.Button(self.control_frame, text="Disable", width=7, command=self.electrometer.disable_current_input)
+        en.grid(row=3, column=2, pady=(10, 0), sticky="W")
+        dis.grid(row=3, column=3, padx=(5, 0), pady=(10, 0), sticky="W")
 
         # Place voltage entry field
         tk.Label(self.control_frame, text="Voltage in V:").grid(row=4, sticky="W", padx=(10, 0), pady=(30, 0))
@@ -86,7 +88,8 @@ class ControlFrame:
         self.control_message.grid(row=5, sticky="W", padx=10, pady=(30, 0), columnspan=3)
 
         # Initialize high voltage state frame, will be set to a green or red background depending on the state
-        self.state_frame = tk.Frame(self.control_frame, width=50, height=50, highlightthickness=1, highlightbackground="black", bg="green")
+        self.state_frame = tk.Frame(self.control_frame, width=50, height=50,
+                                    highlightthickness=1, highlightbackground="black", bg="green")
         self.state_frame.place(x=360, y=230)
 
         # Start to update labels periodically
@@ -132,5 +135,10 @@ class ControlFrame:
 
         :return: None
         """
-        if tk.messagebox.showwarning("Warning", "Assure that the current is < 20 mA. \nOtherwise, the device may be damaged. \nProceed?", type="okcancel") == 'ok':
+
+        # define message for popup
+        message = "Assure that the current is < 20 mA. \nOtherwise, the device may be damaged. \nProceed?"
+
+        # ask user to confirm action
+        if tk.messagebox.showwarning("Warning", message, type="okcancel") == 'ok':
             self.electrometer.enable_current_input()

@@ -2,7 +2,6 @@
 Safety circuit module
 """
 from parameters import Parameters
-import tkinter.messagebox
 
 
 def start_safety_circuit(root, labjack, relays):
@@ -56,7 +55,6 @@ def auto_update_safety_circuit(root, labjack, relays, labjack_state_before):
 
     # Switch off gnd/hv relays if safety circuit is opened
     if state_s1 == "LOW" or state_s2 == "LOW" or state_safety_relay == "open":
-        print(state_hv_relay, state_gnd_relay)
         if state_hv_relay == "closed":
             relays.switch_relay("HV", "OFF", labjack)
         if state_gnd_relay == "closed":

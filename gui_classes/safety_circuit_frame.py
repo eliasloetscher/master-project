@@ -3,20 +3,23 @@ from parameters import Parameters
 
 
 class SafetyCircuitFrame:
-    """ This class implements the gui widget for the safety circuit.
+    """ This class implements the gui widget for the saftey circuit section.
 
     Methods
     ---------
-    None
+    auto_update_labels()    Starts to periodically update the gui state labels (safety circuit frame)
     """
 
     def __init__(self, root, labjack, relays):
-        """ Constructor of the safety circuit class
+        """Constructor of the class ControlFrame
 
-        :param root: parent frame/window
+        For the following device parameters, use the corresponding class in the package 'devices'
+        :param root: tkinter root instance
+        :param labjack: object for controlling the labjack
+        :param relays: object for controlling the relays
         """
 
-        # Initialize vars
+        # Initialize class vars
         self.root = root
         self.labjack = labjack
         self.relays = relays
@@ -25,7 +28,9 @@ class SafetyCircuitFrame:
         self.safety_circuit_frame = tk.Frame(self.root, width=430, height=200, highlightbackground="black",
                                              highlightthickness=1)
         self.safety_circuit_frame.grid(row=2, padx=20, pady=(0, 20))
-        self.safety_circuit_frame.grid_propagate(False)  # Avoid frame shrinking to the size of the included elements
+
+        # Avoid frame shrinking to the size of the included elements
+        self.safety_circuit_frame.grid_propagate(False)
 
         # Set and place frame title
         safety_frame_title = tk.Label(self.safety_circuit_frame, text="Safety Circuit", font="Helvetica 14 bold")
@@ -65,12 +70,9 @@ class SafetyCircuitFrame:
         self.auto_update_labels()
 
     def auto_update_labels(self):
-        """
+        """ Starts to periodically update the gui state labels (safety circuit frame)
 
-        :param root:
-        :param labjack:
-        :param relays:
-        :return:
+        :return: None
         """
 
         # Get states
@@ -84,7 +86,8 @@ class SafetyCircuitFrame:
             # Clear error message
             if not self.relays.safety_message == "":
                 self.relays.safety_message = ""
-                print("cleared safety error message")
+                if Parameters.DEBUG:
+                    print("cleared safety error message")
         elif s1_state == "LOW":
             s1_label_text = "open"
         elif not s1_state:
@@ -137,5 +140,5 @@ class SafetyCircuitFrame:
         else:
             self.state_frame.configure(bg="green")
 
-        # repeat with a given time interval
+        # Repeat at a given time interval
         self.root.after(500, self.auto_update_labels)

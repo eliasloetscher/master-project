@@ -1,5 +1,4 @@
 import tkinter as tk
-from parameters import Parameters
 
 
 class DevicesFrame:
