@@ -47,17 +47,20 @@ class MeasurementFrame:
         measurement_frame_title.grid(padx=5, pady=5, columnspan=2, sticky="W")
 
         # Create radio buttons
-        v = tk.IntVar()
-        rad1 = tk.Radiobutton(self.measurement_frame, text="Overview", variable=v, value=1,
+        self.radiovar = tk.IntVar()
+        rad1 = tk.Radiobutton(self.measurement_frame, text="Overview", variable=self.radiovar, value=1,
                               command=self.show_sub_frame_overview)
-        rad2 = tk.Radiobutton(self.measurement_frame, text="Voltage", variable=v, value=2,
+        rad2 = tk.Radiobutton(self.measurement_frame, text="Voltage", variable=self.radiovar, value=2,
                               command=self.show_sub_frame_voltage)
-        rad3 = tk.Radiobutton(self.measurement_frame, text="Current", variable=v, value=3,
+        rad3 = tk.Radiobutton(self.measurement_frame, text="Current", variable=self.radiovar, value=3,
                               command=self.show_sub_frame_current)
-        rad4 = tk.Radiobutton(self.measurement_frame, text="Temperature", variable=v, value=4,
+        rad4 = tk.Radiobutton(self.measurement_frame, text="Temperature", variable=self.radiovar, value=4,
                               command=self.show_sub_frame_temperature)
-        rad5 = tk.Radiobutton(self.measurement_frame, text="Humidity", variable=v, value=5,
+        rad5 = tk.Radiobutton(self.measurement_frame, text="Humidity", variable=self.radiovar, value=5,
                               command=self.show_sub_frame_humidity)
+
+        # Set default radio selection
+        self.radiovar.set(1)
 
         rad1.grid(row=2, column=0, padx=10, sticky="W")
         rad2.grid(row=2, column=1, padx=15, sticky="W")

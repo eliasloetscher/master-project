@@ -83,6 +83,7 @@ class Relays:
             raise ValueError
 
         try:
+            print("write port: ", port, " value, ", write)
             labjack.write_digital(port, write)
         except (ValueError, TypeError, LJMError):
             self.control_message = "Error! Check labjack connection."
@@ -108,7 +109,7 @@ class Relays:
                 raise ValueError
 
     def switch_off_all_relays(self):
-        """ Use at safety circuit startup to assure the relay states are correctly set.
+        """ Use at safety circuit startup or when labjack reconnects to assure the relay states are correctly set.
 
         :return: True if successful, False if an error occurred.
         """

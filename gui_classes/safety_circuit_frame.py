@@ -49,8 +49,8 @@ class SafetyCircuitFrame:
         # Set and place 'close' or 'open' safety circuit buttons
         open_button = tk.Button(self.safety_circuit_frame, text="Open", width=7, command=lambda: relays.switch_relay("SAFETY", "OFF", labjack))
         close_button = tk.Button(self.safety_circuit_frame, text="Close", width=7, command=lambda: relays.switch_relay("SAFETY", "ON", labjack))
-        open_button.grid(row=3, column=2, sticky="W", pady=(10, 0), padx=(20, 0))
-        close_button.grid(row=3, column=3, sticky="W", pady=(10, 0), padx=(5, 0))
+        open_button.place(x=185, y=102)
+        close_button.place(x=262, y=102)
 
         # Place label for safety_message
         self.safety_message = tk.Label(self.safety_circuit_frame, text="", fg="red")
