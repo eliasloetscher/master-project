@@ -16,7 +16,8 @@ class RecordingFrame:
     stop_recording()    Finish method, task is done once at the end if user stops the recording process
     """
 
-    def __init__(self, root, electrometer, hvamp, hum_sensor):
+    # MOD FOR HUM REFERENCE MEASUREMENT: labjack_connection. DELETE AFTERWARDS!!!
+    def __init__(self, root, electrometer, hvamp, hum_sensor, labjack_connection):
         """ Constructor of the class RecordingFrame
 
         For the following device parameters, use the corresponding class in the package 'devices'
@@ -31,6 +32,9 @@ class RecordingFrame:
         self.electrometer = electrometer
         self.hvamp = hvamp
         self.hum_sensor = hum_sensor
+
+        # MOD FOR HUM REFERENCE MEASUREMENT: labjack_connection. DELETE AFTERWARDS!!!
+        self.lj = labjack_connection
 
         # Initialize recording vars and set default values
         self.after_id = None
@@ -118,8 +122,9 @@ class RecordingFrame:
                 self.state_frame.configure(bg="red")
 
                 # Create log file with data information (DO NOT CHANGE)
+                # MODIFACATION FOR HUM REFERENCE: humidity_ref. DELETE AFTERWARDS
                 log.create_logfile(self.filename.get())
-                log.log_message("date, time, absolute_time, voltage, current, temperature, humidity")
+                log.log_message("date, time, absolute_time, voltage, current, temperature, humidity, humdity_ref")
 
                 # Start to record
                 self.record()
@@ -132,6 +137,12 @@ class RecordingFrame:
 
         # Get all sensor values
         values = measure.measure_all_values(self.electrometer, self.hvamp, self.hum_sensor)
+
+        # MOD FOR HUM REFERENCE. DELETE AFTERWARDS !!!!
+        humidity_in_volt = self.lj.read_analog("AIN1")
+        convert = 0.0375 * (humidity_in_volt) * 1000 - 37.7
+        print("HUMIDITY REFERENCE: ", round(convert, 2))
+        values.append(round(convert, 2))
 
         # Log all values
         log.log_values(values)

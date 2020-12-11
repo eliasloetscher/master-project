@@ -1,34 +1,43 @@
-from devices.humidity_sensor_htm2500lf import Htm2500lf
+from devices.sensor_htm2500lf import HumiditySensorHtm2500lf
 from devices.labjack_t7pro import LabjackConnection
 import utilities.log_module as log
 import time
+import numpy
 
 
-def validation_mixing_chamber(wait_time_humid_air, wait_time_dry_air, repetitions, measure_interval):
+def test_series(test_temp):
     lj_connection = LabjackConnection()
-    hum_sensor = Htm2500lf(lj_connection)
-    log.create_logfile("humidity_validation")
+    log.create_logfile(str("humidity_validation_"+test_temp))
+    log.log_message("date, time, absolute_time_in_ms, t_mix_chamber, t_test_cell, hum_mix_chamber, hum_test_cell")
 
-    for i in range(0, repetitions + 1):
-        input("Set air flow to 100% humidity. Press Enter to continue ...")
-        log.log_message("Starting to measure humidity, setting: 100 % humid air")
-        time_now = time.time()
-        end_time = time_now + wait_time_humid_air
-        while time.time() < end_time:
-            log.log_values([hum_sensor.read_humidity()])
-            time.sleep(measure_interval)
-        log.log_message("Finished measurement \n \n")
+    while True:
 
-        input("Set air flow to 100% dry air. Press Enter to continue ...")
-        log.log_message("Starting to measure humidity, setting: 100 % dry air")
-        time_now = time.time()
-        end_time = time_now + wait_time_dry_air
-        while time.time() < end_time:
-            log.log_values([hum_sensor.read_humidity()])
-            time.sleep(measure_interval)
-        log.log_message("Finished measurement \n \n")
+        # get sensor values
+        test_cell_humidity_in_mv = lj_connection.read_analog("AIN13")*1000
+        test_cell_temp_in_mv = lj_connection.read_analog("AIN12")*1000
+        mix_chamber_humidity_in_mv = lj_connection.read_analog("AIN0")*1000
+        mix_chamber_temp_in_mv = lj_connection.read_analog("AIN10")*1000
 
+        # convert humidity values
+        test_cell_humiduty_converted = round(0.0375 * test_cell_humidity_in_mv - 37.7, 2)
+        mix_chamber_humidity_converted = round(0.0375 * mix_chamber_humidity_in_mv - 37.7, 2)
+
+        # convert test cell temperature
+        tcr = (10000*test_cell_temp_in_mv)/(5000-test_cell_temp_in_mv)
+        test_cell_temp_in_k = 1/(8.54942*pow(10, -4) + 2.57305*pow(10, -4)*numpy.log(tcr) + 1.65368*pow(10, -7)*pow(numpy.log(tcr), 3))
+        test_cell_temp_in_deg_c = round(test_cell_temp_in_k - 273.15, 2)
+
+        # convert mix chamber temperature
+        mcr = (10000*mix_chamber_temp_in_mv)/(5000-mix_chamber_temp_in_mv)
+        mix_chamber_temp_in_k = 1/(8.54942*pow(10, -4) + 2.57305*pow(10, -4)*numpy.log(mcr) + 1.65368*pow(10, -7)*pow(numpy.log(mcr), 3))
+        mix_chamber_temp_in_deg_c = round(mix_chamber_temp_in_k - 273.15, 2)
+
+        # print(mix_chamber_temp_in_deg_c, test_cell_temp_in_deg_c, mix_chamber_humidity_converted, test_cell_humiduty_converted)
+
+        # log values
+        values = [mix_chamber_temp_in_deg_c, test_cell_temp_in_deg_c, mix_chamber_humidity_converted, test_cell_humiduty_converted]
+        log.log_values(values)
         time.sleep(1)
 
 
-validation_mixing_chamber(600, 600, 2, 2)
+test_series("hum_test_valuesaadsfsafs")

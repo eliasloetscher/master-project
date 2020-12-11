@@ -80,7 +80,7 @@ class SafetyCircuitFrame:
         s2_state = self.labjack.read_digital(Parameters.LJ_DIGITAL_IN_PILZ_S2)
         relay_state_text = self.relays.safety_state
 
-        # Prepare s1 label text
+        # Prepare s1 label text (switch: normally closed)
         if s1_state == "HIGH":
             s1_label_text = "closed"
             # Clear error message
@@ -96,10 +96,10 @@ class SafetyCircuitFrame:
         else:
             raise ValueError
 
-        # Prepare s2 label text
-        if s2_state == "HIGH":
+        # Prepare s2 label text (switch: normally open)
+        if s2_state == "LOW":
             s2_label_text = "closed"
-        elif s2_state == "LOW":
+        elif s2_state == "HIGH":
             s2_label_text = "open"
         elif not s2_state:
             # If labjack is not connected, s1_state is False

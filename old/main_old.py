@@ -1,7 +1,7 @@
 # Main python script
 
 from devices.labjack_t7pro import LabjackConnection
-from devices.humidity_sensor_htm2500lf import Htm2500lf
+from devices.sensor_htm2500lf import Htm2500lf
 from devices.hv_amp_ultravolt_hva5kv import HVAmp
 
 connection = LabjackConnection()

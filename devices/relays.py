@@ -56,7 +56,7 @@ class Relays:
             if s1_state == "LOW":
                 self.safety_message = "Error! Close Pilz S1 first."
                 return
-            elif s2_state == "LOW":
+            elif s2_state == "HIGH":
                 self.safety_message = "Error! Close Pilz S2 first"
                 return
 

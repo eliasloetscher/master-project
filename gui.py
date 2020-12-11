@@ -4,7 +4,7 @@ import tkinter.messagebox
 from devices.labjack_t7pro import LabjackConnection
 from devices.electrometer_keysight_b2985a import ElectrometerControl
 from devices.hv_amp_ultravolt_hva5kv import HVAmp
-from devices.humidity_sensor_htm2500lf import HumiditySensorHtm2500lf
+from devices.sensor_htm2500lf import SensorHtm2500lf
 from devices.relays import Relays
 
 from gui_classes.safety_circuit_frame import SafetyCircuitFrame
@@ -45,7 +45,7 @@ def gui():
     relays = Relays(labjack)
     electrometer = ElectrometerControl()
     hvamp = HVAmp(labjack)
-    humidity_sensor = HumiditySensorHtm2500lf(labjack)
+    humidity_sensor = SensorHtm2500lf(labjack)
 
     # Initialize tkinter instance
     root = tk.Tk()
@@ -68,7 +68,8 @@ def gui():
     SafetyCircuitFrame(root, labjack, relays)
     ControlFrame(root, labjack, relays, electrometer, hvamp)
     MeasurementFrame(root, electrometer, hvamp, humidity_sensor)
-    RecordingFrame(root, electrometer, hvamp, humidity_sensor)
+    # MOD FOR HUM REFERENCE MEASUREMENT: labjack_connection. DELETE AFTERWARDS!!!
+    RecordingFrame(root, electrometer, hvamp, humidity_sensor, labjack)
 
     # Introduce closing action with protocol handler
     root.protocol("WM_DELETE_WINDOW", lambda: on_closing(root, relays))
