@@ -15,6 +15,8 @@ from gui_classes.recording_frame import RecordingFrame
 
 import utilities.safety_circuit as safety
 
+from parameters import Parameters
+
 
 def on_closing(root, relays):
     """ Method which is called if the user explicitly quits the gui, i.e. clicks on the "X" button on top right corner
@@ -47,11 +49,14 @@ def gui():
     hvamp = HVAmp(labjack)
     humidity_sensor = SensorHtm2500lf(labjack)
 
+    # Define basic labjack parameters
+    labjack.set_analog_in_resolution(Parameters.LJ_ANALOG_IN_HV_PROBE, 12)  # 12-bit adc resolution
+
     # Initialize tkinter instance
     root = tk.Tk()
 
     # Start safety circuit
-    safety.start_safety_circuit(root, labjack, relays)
+    safety.start_safety_circuit(root, labjack, relays, electrometer, hvamp)
 
     # Set gui name
     root.title("MVISS")
@@ -67,7 +72,7 @@ def gui():
     DevicesFrame(root, labjack, electrometer)
     SafetyCircuitFrame(root, labjack, relays)
     ControlFrame(root, labjack, relays, electrometer, hvamp)
-    MeasurementFrame(root, electrometer, hvamp, humidity_sensor)
+    MeasurementFrame(root, electrometer, hvamp, humidity_sensor, labjack)
     # MOD FOR HUM REFERENCE MEASUREMENT: labjack_connection. DELETE AFTERWARDS!!!
     RecordingFrame(root, electrometer, hvamp, humidity_sensor, labjack)
 

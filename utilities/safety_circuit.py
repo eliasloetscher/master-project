@@ -4,7 +4,7 @@ Safety circuit module
 from parameters import Parameters
 
 
-def start_safety_circuit(root, labjack, relays):
+def start_safety_circuit(root, labjack, relays, electrometer, hvamp):
     """
 
     :param root:
@@ -17,15 +17,16 @@ def start_safety_circuit(root, labjack, relays):
     assert relays.switch_off_all_relays()
 
     # start the safety circuit with auto update
-    auto_update_safety_circuit(root, labjack, relays, labjack.connection_state)
+    auto_update_safety_circuit(root, labjack, relays, electrometer, hvamp, labjack.connection_state)
 
 
-def auto_update_safety_circuit(root, labjack, relays, labjack_state_before):
+def auto_update_safety_circuit(root, labjack, relays, electrometer, hvamp, labjack_state_before):
     """
 
     :param root:
     :param labjack:
     :param relays:
+    :param labjack_state_before:
     :return:
     """
 
@@ -46,9 +47,6 @@ def auto_update_safety_circuit(root, labjack, relays, labjack_state_before):
     state_hv_relay = relays.hv_relay_state
     state_gnd_relay = relays.gnd_relay_state
 
-    print("STATE S1: ", state_s1)
-    print("STATE S2: ", state_s2)
-
     # Switch off safety relay and hv relay if S1 or S2 is opened -> Watch out, not same Pilz version (opener/closer)
     if state_s1 == "LOW" or state_s2 == "HIGH":
         if state_safety_relay == "closed":
@@ -66,12 +64,21 @@ def auto_update_safety_circuit(root, labjack, relays, labjack_state_before):
     # Switch signal lamp (note: if state is HIGH, switch is closed! State 'ON' means switch to red)
     if state_s1 == "HIGH" and state_s2 == "LOW" and state_safety_relay == "closed":
         if relays.lamp_state == "open":
-            print("safety circuit: switch lamp to red")
+            if Parameters.DEBUG:
+                print("safety circuit: switch lamp to red")
             relays.switch_relay("LAMP", "ON", labjack)
+
+    # --- ACTIONS WHEN SAFETY CIRCUIT IS OPENED --- #
     else:
         if relays.lamp_state == "closed":
-            print("safety circuit: switch lamp to green")
+            if Parameters.DEBUG:
+                print("safety circuit: switch lamp to green, reset voltage and disable ampmeter")
+            # switch lamp to green
             relays.switch_relay("LAMP", "OFF", labjack)
+            # reset hvamp voltage to zero
+            hvamp.set_voltage(0)
+            # disable ampmeter
+            electrometer.disable_current_input()
 
     # Check safety circuit periodically (given in ms)
-    root.after(500, lambda: auto_update_safety_circuit(root, labjack, relays, labjack_state_now))
+    root.after(500, lambda: auto_update_safety_circuit(root, labjack, relays, electrometer, hvamp, labjack_state_now))

@@ -180,6 +180,44 @@ class LabjackConnection:
             self.close_connection()
             return False
 
+    def set_analog_in_resolution(self, port, resolution):
+        """
+
+        :param port: AIN0 - AIN12
+        :param resolution: adc resolution in bits (0-12)
+        :exception TypeError: if port is not string or voltage is not float
+        :exception ValueError: if port is invalid or voltage is out of range
+        :exception LJMError: An error was returned from the LJM library call
+        :return: None
+        """
+
+        if not isinstance(port, str) or not isinstance(resolution, int):
+            raise TypeError
+
+        if not port[0:3] == "AIN":
+            raise ValueError
+
+        if len(port) == 4:
+            port_number = int(port[3])
+        elif len(port) == 5:
+            port_number = int(port[3:5])
+        else:
+            raise ValueError
+
+        if port_number < 0 or port_number > 12:
+            raise ValueError
+
+        if resolution < 0 or resolution > 12:
+            raise ValueError
+
+        write = str(port + "_RESOLUTION_INDEX")
+        try:
+            ljm.eWriteName(self.connection_handle, write, resolution)
+        except (TypeError, LJMError):
+            self.connection_state = False
+            self.close_connection()
+            return False
+
     def close_connection(self):
         """
         Closes the labjack connection

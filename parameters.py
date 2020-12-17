@@ -32,6 +32,9 @@ class Parameters:
     # Location for logfiles
     LOCATION_LOG_FILES = "C:/Users/eliasl/Documents/logfiles/"
 
+    # Labjack analog input port for hv probe
+    LJ_ANALOG_IN_HV_PROBE = "AIN0"
+
     # Labjack analog input port for humidity sensor (integrated in htm2500lf)
     LJ_ANALOG_IN_HUMIDITY_SENSOR = "AIN11"
 

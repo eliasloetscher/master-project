@@ -101,7 +101,7 @@ class ControlFrame:
         :return: None
         """
 
-        # Prepare label text and label colour
+        # Prepare label text and label colour for relays
         label_text = [self.relays.hv_relay_state, self.relays.gnd_relay_state]
         label_colours = []
         for element in label_text:
@@ -116,10 +116,19 @@ class ControlFrame:
         if len(label_colours) != 2:
             raise ValueError
 
+        # Prepare label text and label colour for ampmeter
+        if self.electrometer.ampmeter_state:
+            ampmeter_text = "on"
+            ampmeter_color = "green"
+        else:
+            ampmeter_text = "off"
+            ampmeter_color = "red"
+
         # Update state labels
         self.hv_relay_state_label.configure(text=label_text[0], fg=label_colours[0])
         self.gnd_relay_state_label.configure(text=label_text[1], fg=label_colours[1])
         self.control_message.configure(text=self.relays.control_message)
+        self.ampmeter_state_label.configure(text=ampmeter_text, fg=ampmeter_color)
 
         # Update state frame (red if hv relay is closed, green otherwise)
         if label_text[0] == 'closed':
@@ -137,7 +146,7 @@ class ControlFrame:
         """
 
         # define message for popup
-        message = "Assure that the current is < 20 mA. \nOtherwise, the device may be damaged. \nProceed?"
+        message = "Assure that the current is < 20 mA. \nOtherwise, the device may be damaged. \n \nProceed?"
 
         # ask user to confirm action
         if tk.messagebox.showwarning("Warning", message, type="okcancel") == 'ok':

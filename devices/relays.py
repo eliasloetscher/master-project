@@ -30,7 +30,7 @@ class Relays:
         :return: None
         """
 
-        # Print function call if debug mode on
+        # Print function call if debug mode is on
         if Parameters.DEBUG:
             print("Relay class call: ", name, state)
 
@@ -83,7 +83,8 @@ class Relays:
             raise ValueError
 
         try:
-            print("write port: ", port, " value, ", write)
+            if Parameters.DEBUG:
+                print("write port: ", port, " value, ", write)
             labjack.write_digital(port, write)
         except (ValueError, TypeError, LJMError):
             self.control_message = "Error! Check labjack connection."

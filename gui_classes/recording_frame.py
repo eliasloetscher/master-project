@@ -136,7 +136,7 @@ class RecordingFrame:
         """
 
         # Get all sensor values
-        values = measure.measure_all_values(self.electrometer, self.hvamp, self.hum_sensor)
+        values = measure.measure_all_values(self.electrometer, self.hvamp, self.hum_sensor, self.lj)
 
         # MOD FOR HUM REFERENCE. DELETE AFTERWARDS !!!!
         humidity_in_volt = self.lj.read_analog("AIN1")

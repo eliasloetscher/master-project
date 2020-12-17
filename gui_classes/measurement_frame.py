@@ -19,7 +19,7 @@ class MeasurementFrame:
     show_sub_frame_y        Show/Hide the subframes, y can be overview, voltage, current, temperature, or humidity
     """
 
-    def __init__(self, root, electrometer, hvamp, hum_sensor):
+    def __init__(self, root, electrometer, hvamp, hum_sensor, labjack):
         """ Constructor of the class MeasurementFrame
 
         For the following device parameters, use the corresponding class in the package 'devices'
@@ -27,6 +27,7 @@ class MeasurementFrame:
         :param electrometer: object for controlling the electrometer
         :param hvamp: object for controlling the high voltage amplifier
         :param hum_sensor: object for controlling the humidity sensor
+        :param labjack: object for controlling the labjack
         """
 
         # Initialize class vars given in class paramters
@@ -34,6 +35,7 @@ class MeasurementFrame:
         self.hvamp = hvamp
         self.electrometer = electrometer
         self.hum_sensor = hum_sensor
+        self.labjack = labjack
 
         # Initialize after_id variables for each subframe
         self.after_id_overview = None
@@ -193,8 +195,8 @@ class MeasurementFrame:
         self.graph_current.get_tk_widget().place(x=10, y=10)
 
         # Place buttons for start/stop plot, lin/log mode and measurement interval settings
-        tk.Button(self.sub_frame_current, text="Start", command=lambda: self.update_plot("current", [])).grid(row=1, padx=(10, 0), pady=(400, 0), sticky="W")
-        tk.Button(self.sub_frame_current, text="Stop",command=lambda: self.root.after_cancel(self.after_id_current)).grid(row=1, column=1, pady=(400, 0), padx=5, sticky="W")
+        tk.Button(self.sub_frame_current, text="Start", command=lambda: self.start_current_plot("current", [])).grid(row=1, padx=(10, 0), pady=(400, 0), sticky="W")
+        tk.Button(self.sub_frame_current, text="Stop", command=lambda: self.root.after_cancel(self.after_id_current)).grid(row=1, column=1, pady=(400, 0), padx=5, sticky="W")
         tk.Button(self.sub_frame_current, text="Lin mode", command=lambda: self.linlogmode_current.set("lin")).grid(row=1, column=2, padx=(15, 0), pady=(400, 0), sticky="W")
         tk.Button(self.sub_frame_current, text="Log mode", command=lambda: self.linlogmode_current.set("log")).grid(row=1, column=3, padx=5, pady=(400, 0), sticky="W")
         tk.Label(self.sub_frame_current, text="Set interval in ms:").grid(row=1, column=4, pady=(400, 0), padx=5, sticky="W")
@@ -288,7 +290,7 @@ class MeasurementFrame:
         x_labels = ["Datapoints", "Datapoints", "Datapoints", "Datapoints"]
 
         # Get new sensor values
-        values = measure.measure_all_values(self.electrometer, self.hvamp, self.hum_sensor)
+        values = measure.measure_all_values(self.electrometer, self.hvamp, self.hum_sensor, self.labjack)
         for i in range(len(self.overview_data)):
             # Shorten data lists to a maximum of 50 elements
             if len(self.overview_data[i]) >= 50:
@@ -315,6 +317,17 @@ class MeasurementFrame:
         # Repeat with a given interval
         self.after_id_overview = self.root.after(500, self.update_overview)
 
+    def start_current_plot(self, plot, datapoints):
+        # Ask if ampmeter should be switched on if disabled
+        if plot == "current" and not self.electrometer.ampmeter_state:
+            # define message for popup
+            message = "The ampmeter is currently switched off. Do you want to enable it? \n \nAssure that the current is < 20 mA. \nOtherwise, the device may be damaged."
+            # ask user to confirm action
+            if tk.messagebox.askyesno("Ampmeter info", message):
+                self.electrometer.enable_current_input()
+
+        self.update_plot(plot, datapoints)
+
     def update_plot(self, plot, datapoints):
         """ This method aupdates a specified plot
 
@@ -326,10 +339,14 @@ class MeasurementFrame:
         # Initialize lists for objects (figures and plots), data, and settings (lin/log, labels)
         objects, data, settings = [], [], []
 
+        # DELETE AFTERWARDS
+        # print("Current monitor hvamp in nA: ", self.hvamp.get_current())
+        print("Voltage at AIN0: ", self.labjack.read_analog("AIN0"))
+
         # Add correct list elements depending on plot
         if plot == "volt":
             objects = [self.graph_volt, self.ax_volt]
-            data = [datapoints, self.hvamp.get_voltage()]
+            data = [datapoints, measure.measure_voltage(self.hvamp, self.labjack)]
             settings = [self.linlogmode_voltage.get(), "Datapoints", "Voltage in V"]
         elif plot == "current":
             objects = [self.graph_current, self.ax_current]
@@ -359,7 +376,7 @@ class MeasurementFrame:
         objects[1].set_ylabel(settings[2])
         objects[1].grid()
 
-        # Prepare plot depending on linera or logarithmic mode
+        # Prepare plot depending on linear or logarithmic mode
         if settings[0] == "lin":
             objects[1].plot(range(len(data[0])), data[0])
         elif settings[0] == "log":

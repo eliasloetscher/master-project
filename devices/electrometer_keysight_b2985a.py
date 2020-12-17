@@ -1,6 +1,7 @@
 import pyvisa as visa
 from parameters import Parameters
 from pyvisa import VisaIOError
+import time
 
 
 class InterlockError(Exception):
@@ -25,6 +26,9 @@ class ElectrometerControl:
 
         # Electrometer resource manager
         self.rm = None
+
+        # State of the ampere meter: enabled (True) or disabled (False)
+        self.ampmeter_state = False
 
         # Try to connect
         self.connect()
@@ -147,7 +151,7 @@ class ElectrometerControl:
 
     def enable_source_output(self):
         """
-        Enables the voltage source.
+        Enable the voltage source.
         :return: None
         """
         # Check if connection is alive. If not, try to connect.
@@ -165,7 +169,7 @@ class ElectrometerControl:
 
     def disable_source_output(self):
         """
-        Disables the voltage source.
+        Disable the voltage source.
         :return: None
         """
         # Check if connection is alive. If not, try to connect.
@@ -195,6 +199,7 @@ class ElectrometerControl:
         try:
             query = str('INP:STAT ON')
             self.session.write(query)
+            self.ampmeter_state = True
         except visa.Error:
             self.connection_state = False
             self.close_connection()
@@ -214,6 +219,7 @@ class ElectrometerControl:
         try:
             query = str('INP:STAT OFF')
             self.session.write(query)
+            self.ampmeter_state = False
         except visa.Error:
             self.connection_state = False
             self.close_connection()
@@ -226,12 +232,17 @@ class ElectrometerControl:
             if not self.connect():
                 return False
 
-        try:
-            self.session.write('MEAS:CURR:DC?')
-            result = self.session.read()
-        except VisaIOError:
-            print("ERROR WHILE READING CURRENT. VisaIOError in function electrometer_control.get_current()")
-            result = 0
+        result = 0
+        i = 0
+        while i < 5:
+            try:
+                self.session.write('MEAS:CURR:DC?')
+                result = self.session.read()
+                break
+            except VisaIOError:
+                i += 1
+                print("ERROR WHILE READING CURRENT. VisaIOError in function electrometer_control.get_current()")
+                time.sleep(1)
 
         return result
 
