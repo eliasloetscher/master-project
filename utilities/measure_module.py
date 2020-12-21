@@ -36,18 +36,12 @@ def measure_voltage(hvamp, labjack):
 
     real_voltage = voltage + correction
 
-    print(voltage, correction, real_voltage)
-
     return real_voltage
-
-    # return hvamp.get_voltage()
 
 
 def measure_current(electrometer):
     result = electrometer.get_current()
     result_in_picoampere = round(float(result)*1000*1000*1000*1000, 5)
-    if Parameters.DEBUG:
-        print(result_in_picoampere)
     return result_in_picoampere
 
 

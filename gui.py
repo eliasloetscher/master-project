@@ -14,6 +14,7 @@ from gui_classes.measurement_frame import MeasurementFrame
 from gui_classes.recording_frame import RecordingFrame
 
 import utilities.safety_circuit as safety
+import utilities.breakdown_detection as bd
 
 from parameters import Parameters
 
@@ -57,6 +58,9 @@ def gui():
 
     # Start safety circuit
     safety.start_safety_circuit(root, labjack, relays, electrometer, hvamp)
+
+    # Start breakdown detection
+    bd.breakdown_detection(root, labjack, electrometer, hvamp, False)
 
     # Set gui name
     root.title("MVISS")

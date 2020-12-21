@@ -26,6 +26,9 @@ class HVAmp:
         # Initialize the labjack connection class var
         self.lj_connection = labjack_connection
 
+        # Initialize var for voltage set by user in V
+        self.user_voltage = 0
+
         # Set up 10 V precision reference voltage
         try:
             self.lj_connection.ljtick_dac_set_analog_out(Parameters.LJ_ANALOG_OUT_HVA_REF, 10.0)
@@ -59,6 +62,7 @@ class HVAmp:
         # Try to set the output voltage via LJ DAC Tick
         try:
             self.lj_connection.ljtick_dac_set_analog_out(Parameters.LJ_ANALOG_OUT_HVA_CTRL, control_voltage)
+            self.user_voltage = output_voltage
         except (TypeError, ValueError, LJMError):
             pass
 

@@ -17,6 +17,15 @@ class Parameters:
     # Is a boolean which defines, if the programs should run in debug mode (True) or not (False)
     DEBUG = True
 
+    # Breakdown detection voltage deviation in % (bd is detected if voltage_is deviates mor than x% from voltage_set)
+    BD_VOLTAGE_DEVIATION = 10
+
+    # Breakdown detection current limit in mA (bd is detected when current_is > current_limit)
+    BD_CURRENT_LIMIT = 10
+
+    # Breakdown interval in seconds specifies how often the routine checks for a breakdown
+    BD_INTERVAL = 2
+
     # Keysight VISA address
     KEYSIGHT_VISA_ADDRESS = "USB0::0x0957::0xD518::MY54321380::0::INSTR"
 
