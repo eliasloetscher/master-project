@@ -341,7 +341,7 @@ class MeasurementFrame:
 
         # DELETE AFTERWARDS
         # print("Current monitor hvamp in nA: ", self.hvamp.get_current())
-        print("Voltage at AIN0: ", self.labjack.read_analog("AIN0"))
+        # print("Voltage at AIN0: ", self.labjack.read_analog("AIN0"))
 
         # Add correct list elements depending on plot
         if plot == "volt":

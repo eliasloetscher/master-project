@@ -22,7 +22,23 @@ def measure_all_values(electrometer, hvamp, humidity_sensor, labjack):
 
 def measure_voltage(hvamp, labjack):
 
-    return 1000 * labjack.read_analog("AIN0")
+    # Get analog value
+    analog_read = labjack.read_analog("AIN0")
+
+    # map (0-5V to 0-5000V)
+    voltage = 1000 * analog_read
+
+    # correct with function
+    coefficients = [1.73204040e-06, 1.08167280e-02, 1.27723794e+00]
+    correction = coefficients[0]*pow(voltage, 2) + coefficients[1]*voltage + coefficients[2]
+    if voltage < 0:
+        correction = 1.66
+
+    real_voltage = voltage + correction
+
+    print(voltage, correction, real_voltage)
+
+    return real_voltage
 
     # return hvamp.get_voltage()
 
