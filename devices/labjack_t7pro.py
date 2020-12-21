@@ -4,13 +4,34 @@ from labjack.ljm import LJMError
 
 
 class LabjackConnection:
+    """ This class provides a set of methods in order to control the Labjack T7-Pro.
+    It is based on the open-source labjack ljm library, officially distributed by labjack ltd.
+
+    Methods
+    ---------
+    connect()                   Searches the labjack and initializes a connection via USB
+    get_handler()               Returns the connection handler
+    get_connection_state()      Returns if the connection is alive or not (False/True/None)
+    read_analog()               Reads the analog input value from a given port (0-10V)
+    read_digital()              Reads the digital input value from a given port (LOW/HIGH)
+    write_digital()             Write a digital value (LOW/HIGH) to a given port
+    ljtick_dac_set_analog_out() Set the analog output voltage of the DAC LJ-Tick (0-10V)
+    set_analog_in_resolution()  Set the bit resolution of a specified analog input port (0-12 bit).
+
+    Note to analog resolution: the higher the resolution, the slower the sampling speed (12 bit -> 159 ms)
+    See datasheet for more information.
+
+    Exceptions
+    -----------
+    TypeError: deviceType or connectionType are not strings.
+    LJMError: An error was returned from the LJM library call.
+    ConnectionError: The connection setup failed
+
+    """
 
     def __init__(self):
-        """
-        Raises:
-        TypeError: deviceType or connectionType are not strings.
-        LJMError: An error was returned from the LJM library call.
-        ConnectionError: The connection setup failed
+        """ Constructor of the class LabjackConnection.
+        Initialize the class vars and setup a labjack connection handle
         """
 
         # Labjack connection handle (default: None. If connected: labjack handler instance)

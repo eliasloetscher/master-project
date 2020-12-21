@@ -12,10 +12,35 @@ class InterlockError(Exception):
 
 
 class ElectrometerControl:
+    """ This class provides a set of methods in order to control the electrometer Keysight B2985a via USB.
+    The communication is based on scpi and the valid keywords are specified in the 'scpi reference guide'.
+
+    Methods
+    ---------
+    connect()               Open a connection and initialize session and resource manager
+    check_connection()      Check if connection is alive and if not, try to reconnect
+    get_idn_response()      Returns the electrometer idn response (system information and identification)
+    get_voltage()           Reads the voltage of the internal voltage source in V
+    set_voltage()           Set the voltage of the internal voltage source in V
+    get_current()           Reads the current in A
+    get_temperature()       Reads the temperature in °C
+    get_interlock_state()   Reads the current state of the interlock (True/False)
+    enable_source_output()  Enables the source output (internal relay)
+    disable_source_output() Disables the source output
+    enable_current_input()  Enables the amperemeter (internal relay)
+    disable_current_input() Disables the amperemeter (i.e. internally connected to gnd)
+    close_connection()      Closes the usb connection and resets the state variables
+
+    """
 
     def __init__(self):
-        """
+        """ Constructor of the class ElectrometerControl
 
+        Initializes the class variables for
+            - session
+            - connection state
+            - resource manager
+            - amperemeter state
         """
 
         # Electrometer session (default: None. If connected: electrometer session instance)
@@ -34,7 +59,7 @@ class ElectrometerControl:
         self.connect()
 
     def connect(self):
-        """ Function used for connecting to Keysight electrometer with parameters specified in Parameters class
+        """ Function used for connecting to Keysight electrometer with address specified in Parameters class
 
         :return: True if connection successful, False if connection error occurred
         """
@@ -63,31 +88,33 @@ class ElectrometerControl:
             return True
 
     def check_connection(self):
+        """ This method checks if the connection is still alive and if not, a reconnection attempt is made
+
+        :return: False if connection is not alive, True otherwise
         """
 
-        :return:
-        """
         # Check if connection is alive. If not, try to connect.
         if not self.connection_state:
             return False
 
+        # Try to ask if the usb connection is enabled. If an error occurs, the connection is down
         try:
             self.session.write('SYST:COMM:ENAB? USB')
-            result = self.session.read()
         except visa.Error:
             self.connection_state = False
             self.close_connection()
             return False
 
-        return result
+        return True
 
     def get_idn_response(self):
-        """
+        """ Returns the electrometer idn response (system information)
+
         :return: idn response as String
         """
 
+        # Try to read IDN response
         try:
-            # Try to read IDN response
             self.session.write('*IDN?')
             idn = self.session.read()
         except visa.Error:
@@ -102,8 +129,9 @@ class ElectrometerControl:
         return idn
 
     def get_voltage(self):
-        """
-        :return:
+        """ Reads the voltage of the internal voltage source in V
+
+        :return: False if connection is not alive, voltage in V otherwise
         """
 
         # Check if connection is alive. If not, try to connect.
@@ -124,102 +152,31 @@ class ElectrometerControl:
 
     def set_voltage(self, voltage):
         """
-        Sets the source voltage immediately.
-        Raises ValueError if voltage is out of range (<0 V or >1000 V)
-        Raises InterlockError if voltage is > 21 V and interlock is open
+        Sets the voltage of the internal voltage source immediately.
+
         :param voltage: Voltage to set
+        :exception ValueError: If voltage is out of range (<0 V or > 1000 V)
+        :exception InterlockError: If Voltage is > 21 V and interlock is open
         :return: None
         """
+
         # Check if connection is alive. If not, try to connect.
         if not self.connection_state:
             if not self.connect():
                 return False
 
+        # Check input parameter. Maximum output voltage is 1000 V.
         if voltage < 0 or voltage > 1000:
             raise ValueError
 
+        # Check if interlock circuit is open and a voltage of > 21 V is intended to apply (software safety)
         if not int(self.get_interlock_state()) and voltage > 21:
             raise InterlockError
 
+        # Set given voltage
         try:
             query = str(':SOUR:VOLT ' + str(voltage))
             self.session.write(query)
-        except visa.Error:
-            self.connection_state = False
-            self.close_connection()
-            return False
-
-    def enable_source_output(self):
-        """
-        Enable the voltage source.
-        :return: None
-        """
-        # Check if connection is alive. If not, try to connect.
-        if not self.connection_state:
-            if not self.connect():
-                return False
-
-        try:
-            query = str(':OUTP:STAT ON')
-            self.session.write(query)
-        except visa.Error:
-            self.connection_state = False
-            self.close_connection()
-            return False
-
-    def disable_source_output(self):
-        """
-        Disable the voltage source.
-        :return: None
-        """
-        # Check if connection is alive. If not, try to connect.
-        if not self.connection_state:
-            if not self.connect():
-                return False
-
-        try:
-            query = str(':OUTP:STAT OFF')
-            self.session.write(query)
-        except visa.Error:
-            self.connection_state = False
-            self.close_connection()
-            return False
-
-    def enable_current_input(self):
-        """
-        Enables the amperemeter input
-        :return: None
-        """
-
-        # Check if connection is alive. If not, try to connect.
-        if not self.connection_state:
-            if not self.connect():
-                return False
-
-        try:
-            query = str('INP:STAT ON')
-            self.session.write(query)
-            self.ampmeter_state = True
-        except visa.Error:
-            self.connection_state = False
-            self.close_connection()
-            return False
-
-    def disable_current_input(self):
-        """
-        Disables the amperemeter input
-        :return: None
-        """
-
-        # Check if connection is alive. If not, try to connect.
-        if not self.connection_state:
-            if not self.connect():
-                return False
-
-        try:
-            query = str('INP:STAT OFF')
-            self.session.write(query)
-            self.ampmeter_state = False
         except visa.Error:
             self.connection_state = False
             self.close_connection()
@@ -232,8 +189,12 @@ class ElectrometerControl:
             if not self.connect():
                 return False
 
+        # Initialize vars
         result = 0
         i = 0
+
+        # Try to read current. If an error occurs, try it again 5x with an interval of 1 second. Return 0 otherwise.
+        # This helps to keep the gui responsive when a communication error occurs. Don't change!
         while i < 5:
             try:
                 self.session.write('MEAS:CURR:DC?')
@@ -247,14 +208,17 @@ class ElectrometerControl:
         return result
 
     def get_temperature(self):
+        """ Read the temperature of the K-Sensor in °C
+
+        :return: Temperature in °C
         """
-        :return:
-        """
+
         # Check if connection is alive. If not, try to connect.
         if not self.connection_state:
             if not self.connect():
                 return False
 
+        # Try to read the temperature
         try:
             self.session.write('SYST:TEMP?')
             temp = self.session.read()
@@ -266,17 +230,27 @@ class ElectrometerControl:
         return temp
 
     def get_interlock_state(self):
-        """
-        Reads the interlock state and returns if open or closed
+        """ Reads the interlock state and returns if open or closed
+
+        :exception InterlockError: If interlock state result is undefined
         :return: True (closed -> HV enabled) or False (open -> HV disabled)
         """
+
         # Check if connection is alive. If not, try to connect.
         if not self.connection_state:
             if not self.connect():
                 return False
 
-        self.session.write('SYST:INT:TRIP?')
-        interlock_state = self.session.read()
+        # Get interlock state
+        try:
+            self.session.write('SYST:INT:TRIP?')
+            interlock_state = self.session.read()
+        except visa.Error:
+            self.connection_state = False
+            self.close_connection()
+            return False
+
+        # Map the result to True (interlock closed) or False (interlock open)
         if int(interlock_state) == 0:
             return True
         elif int(interlock_state) == 1:
@@ -284,7 +258,94 @@ class ElectrometerControl:
         else:
             raise InterlockError
 
+    def enable_source_output(self):
+        """ Enable the voltage source (internal relay)
+
+        :return: None
+        """
+
+        # Check if connection is alive. If not, try to connect.
+        if not self.connection_state:
+            if not self.connect():
+                return False
+
+        # Try to enable the voltage source
+        try:
+            query = str(':OUTP:STAT ON')
+            self.session.write(query)
+        except visa.Error:
+            self.connection_state = False
+            self.close_connection()
+            return False
+
+    def disable_source_output(self):
+        """ Disable the voltage source.
+
+        :return: None
+        """
+
+        # Check if connection is alive. If not, try to connect.
+        if not self.connection_state:
+            if not self.connect():
+                return False
+
+        # Try to disable the voltage source
+        try:
+            query = str(':OUTP:STAT OFF')
+            self.session.write(query)
+        except visa.Error:
+            self.connection_state = False
+            self.close_connection()
+            return False
+
+    def enable_current_input(self):
+        """ Enables the amperemeter input (internal relay)
+
+        :return: None
+        """
+
+        # Check if connection is alive. If not, try to connect.
+        if not self.connection_state:
+            if not self.connect():
+                return False
+
+        # Try to enable the amperemeter
+        try:
+            query = str('INP:STAT ON')
+            self.session.write(query)
+            self.ampmeter_state = True
+        except visa.Error:
+            self.connection_state = False
+            self.close_connection()
+            return False
+
+    def disable_current_input(self):
+        """ Disables the amperemeter input
+
+        :return: None
+        """
+
+        # Check if connection is alive. If not, try to connect.
+        if not self.connection_state:
+            if not self.connect():
+                return False
+
+        # Try to disable the amperemter (connect input internally to gnd)
+        try:
+            query = str('INP:STAT OFF')
+            self.session.write(query)
+            self.ampmeter_state = False
+        except visa.Error:
+            self.connection_state = False
+            self.close_connection()
+            return False
+
     def close_connection(self):
+        """ Closes the usb connection (session and resource manager) and resets the connection state var
+
+        :return: None
+        """
+
         # Close the connection to the instrument
         try:
             self.session.close()
