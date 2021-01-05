@@ -101,7 +101,7 @@ class HVAmp:
         except (TypeError, ValueError, LJMError):
             pass
         else:
-            # Map the measured analog current signal (0-10V) to the real current (0-200uA) and convert to Ampere
+            # Map the measured analog current signal (0-10V) to the real current (0-200uA) and convert to A
             current = result*20*0.001*0.001
 
         return current

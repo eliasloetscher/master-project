@@ -71,17 +71,21 @@ def breakdown_detection(root, labjack, electrometer, hvamp, flag):
     # --------------- BREAKDOWN DETECTION VIA CURRENT --------------- #
 
     # Measure current
-    measured_current_electrometer = measure.measure_current(electrometer)
+    measured_current_electrometer_in_pa = 0
+    # measured_current_electrometer_in_pa = measure.measure_current(electrometer)
     measured_current_hvamp = hvamp.get_current()
+
+    # convert to mA
+    measured_current_electrometer_in_ma = measured_current_electrometer_in_pa*0.001*0.001
 
     # Get current limit set in 'Parameters'
     current_limit = Parameters.BD_CURRENT_LIMIT
 
     # Init values list
-    values = [measured_current_electrometer, measured_current_hvamp, current_limit]
+    values = [measured_current_electrometer_in_ma, measured_current_hvamp, current_limit]
 
     # Check if current is below limit
-    if measured_current_electrometer > current_limit or measured_current_hvamp > current_limit:
+    if measured_current_electrometer_in_ma > current_limit or measured_current_hvamp > current_limit:
         if flag:
             breakdown(hvamp, "Current", str("[Electrometer, HVAmp, Setbyuser]" + str(values) + " mA"))
         else:

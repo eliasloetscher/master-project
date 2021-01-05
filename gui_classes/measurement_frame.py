@@ -339,10 +339,6 @@ class MeasurementFrame:
         # Initialize lists for objects (figures and plots), data, and settings (lin/log, labels)
         objects, data, settings = [], [], []
 
-        # DELETE AFTERWARDS
-        # print("Current monitor hvamp in nA: ", self.hvamp.get_current())
-        # print("Voltage at AIN0: ", self.labjack.read_analog("AIN0"))
-
         # Add correct list elements depending on plot
         if plot == "volt":
             objects = [self.graph_volt, self.ax_volt]
@@ -358,7 +354,7 @@ class MeasurementFrame:
             settings = [self.linlogmode_temp.get(), "Datapoints", "Temperature in °C"]
         elif plot == "humidity":
             objects = [self.graph_humidity, self.ax_humidity]
-            data = [datapoints, self.hum_sensor.read_humidity()]
+            data = [datapoints, measure.measure_humidity(self.hum_sensor)]
             settings = [self.linlogmode_humidity.get(), "Datapoints", "RH in %"]
         else:
             raise ValueError

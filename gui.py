@@ -53,6 +53,9 @@ def gui():
     # Define basic labjack parameters
     labjack.set_analog_in_resolution(Parameters.LJ_ANALOG_IN_HV_PROBE, 12)  # 12-bit adc resolution
 
+    # Define basic electrometer parameters
+    electrometer.set_speed('stable')
+
     # Initialize tkinter instance
     root = tk.Tk()
 
@@ -60,7 +63,7 @@ def gui():
     safety.start_safety_circuit(root, labjack, relays, electrometer, hvamp)
 
     # Start breakdown detection
-    bd.breakdown_detection(root, labjack, electrometer, hvamp, False)
+    # bd.breakdown_detection(root, labjack, electrometer, hvamp, False)
 
     # Set gui name
     root.title("MVISS")
@@ -77,7 +80,6 @@ def gui():
     SafetyCircuitFrame(root, labjack, relays)
     ControlFrame(root, labjack, relays, electrometer, hvamp)
     MeasurementFrame(root, electrometer, hvamp, humidity_sensor, labjack)
-    # MOD FOR HUM REFERENCE MEASUREMENT: labjack_connection. DELETE AFTERWARDS!!!
     RecordingFrame(root, electrometer, hvamp, humidity_sensor, labjack)
 
     # Introduce closing action with protocol handler
