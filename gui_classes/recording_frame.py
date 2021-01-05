@@ -1,8 +1,9 @@
 import tkinter as tk
-import utilities.log_module as log
 import tkinter.messagebox
+import utilities.log_module as log
 import utilities.measure_module as measure
 from parameters import Parameters
+from gui_classes.auto_run_frame import AutoRunFrame
 
 
 class RecordingFrame:
@@ -51,48 +52,28 @@ class RecordingFrame:
         recording_frame_title = tk.Label(self.recording_frame, text="Recordings", font="Helvetica 14 bold")
         recording_frame_title.grid(padx=5, pady=5, sticky="W")
 
-        # Set and place interval label and entry field
-        tk.Label(self.recording_frame, text="Set interval in ms:").grid(row=1, padx=(10, 0), pady=10, sticky="W")
-        self.interval_entry = tk.Entry(self.recording_frame, width=10)
-        self.interval_entry.grid(row=1, column=1, padx=(10, 0), pady=10, sticky="W")
-
-        # Set and place 'set interval' button
-        self.set_interval_button = tk.Button(self.recording_frame, text="Set", command=self.update_interval)
-        self.set_interval_button.grid(row=1, column=2, sticky="W", padx=(10, 0), pady=10)
-
-        # Set and place 'current interval' label and var
-        settingtext = tk.Label(self.recording_frame, text="Current setting: ")
-        settingtext.grid(row=1, column=3, sticky="W", padx=(10, 0), pady=10)
-        self.current_setting_label = tk.Label(self.recording_frame, text=str(str(self.interval)+" ms"))
-        self.current_setting_label.grid(row=1, column=4, sticky="W", pady=10, columnspan=2)
-
         # Set and place filename label and entry field
-        tk.Label(self.recording_frame, text="Set filename:").grid(row=2, padx=(10, 0), pady=10, sticky="W")
+        tk.Label(self.recording_frame, text="Set filename:").grid(row=1, padx=(10, 0), pady=10, sticky="W")
         self.filename = tk.Entry(self.recording_frame, width=30)
-        self.filename.grid(row=2, column=1, padx=(10, 0), pady=10, sticky="W", columnspan=3)
+        self.filename.grid(row=1, column=1, padx=(10, 0), pady=10, sticky="W", columnspan=3)
 
         # Set and place 'start' and 'stop' buttons
         start_button = tk.Button(self.recording_frame, text="Start", command=self.start_recording)
         stop_button = tk.Button(self.recording_frame, text="Stop", command=self.stop_recording)
-        start_button.grid(row=2, column=4, sticky="W", padx=(10, 0), pady=10)
-        stop_button.grid(row=2, column=5, sticky="W", padx=(10, 0), pady=10)
+        start_button.grid(row=1, column=4, sticky="W", padx=(10, 0), pady=10)
+        stop_button.grid(row=1, column=5, sticky="W", padx=(10, 0), pady=10)
+
+        # Set and place button for new automated measurement
+        auto_runtime_button = tk.Button(self.recording_frame, text="Start auto runtime", command=self.auto_run_init)
+        auto_runtime_button.grid(row=2, sticky="W", padx=(10, 0), pady="10")
 
         # Set and place recording state frame
         self.state_frame = tk.Frame(self.recording_frame, width=50, height=50, highlightbackground="black",
                                     highlightthickness=1, bg="green")
         self.state_frame.place(x=580, y=80)
 
-    def update_interval(self):
-        """ Updates the measurement interval given by user
-
-        :return: None
-        """
-
-        # Update interval variable
-        self.interval = int(self.interval_entry.get())
-
-        # Update interval 'current setting' interval
-        self.current_setting_label.configure(text=str(str(self.interval)+" ms"))
+    def auto_run_init(self):
+        AutoRunFrame(self.root, self.electrometer, self.hvamp, self.hum_sensor, self.labjack)
 
     def start_recording(self):
         """ Setting up various tasks for starting to record. If successfull, the method record() is started.

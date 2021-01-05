@@ -1,12 +1,53 @@
 import numpy
 import matplotlib.pyplot as plt
 import time
+import tkinter as tk
 from labjack import ljm
 from devices.labjack_t7pro import LabjackConnection
 from devices.electrometer_keysight_b2985a import ElectrometerControl
+import matplotlib.backends.backend_tkagg as tkagg
+from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
+from gui_classes.auto_run_frame import AutoRunFrame
 
-instance = ElectrometerControl()
 
+AutoRunFrame()
+
+"""
+
+class App:
+    def __init__(self, master):
+        # VARIABLES
+        self.inputFile = ""
+        self.fig = plt.Figure()
+
+        self.canvas = tkagg.FigureCanvasTkAgg(self.fig, master = master)
+        self.canvas.get_tk_widget().pack()
+
+        self.axes = self.fig.add_subplot(111)
+        x_array = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        y_array = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        self.line, = self.axes.plot(x_array, y_array)
+        NavigationToolbar2Tk(self.canvas, root)
+
+        self.canvas.draw()
+
+        subplots[i].plot(range(len(self.overview_data[i])), self.overview_data[i])
+
+        # FRAME
+        frame = tk.Frame(master)
+        master.title("MassyTools 0.1.1 (Alpha)")
+
+
+root = tk.Tk()
+app = App(root)
+root.mainloop()
+
+
+
+
+
+#instance = ElectrometerControl()
+"""
 """
 instance.set_speed('quick')
 i = 0
@@ -27,7 +68,6 @@ while True:
     if i == 5:
         break
 """
-instance.set_range(3)
 
 
 """
