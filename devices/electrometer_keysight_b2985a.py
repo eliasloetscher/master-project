@@ -198,6 +198,7 @@ class ElectrometerControl:
         while i < 5:
             try:
                 self.session.write('MEAS:CURR:DC?')
+                time.sleep(0.1)
                 result = self.session.read()
                 break
             except VisaIOError:
@@ -335,6 +336,80 @@ class ElectrometerControl:
             query = str('INP:STAT OFF')
             self.session.write(query)
             self.ampmeter_state = False
+        except visa.Error:
+            self.connection_state = False
+            self.close_connection()
+            return False
+
+    def set_speed(self, speed):
+        """ Method for setting the aperture mode (measurement speed). Choose 'stable' for best resolution.
+
+        :param speed: must be string 'quick', 'normal' or 'stable'
+        :exception TypeError: If speed is not string
+        :exception ValueError: If speed string or not valid
+        :return: None
+        """
+
+        # Check input parameters
+        if not isinstance(speed, str):
+            raise TypeError
+
+        speed_strings = ['quick', 'normal', 'stable']
+        if speed not in speed_strings:
+            raise ValueError
+
+        # Prepare parameter
+        if speed == 'quick':
+            param = 'SHOR'
+        elif speed == 'normal':
+            param = 'MED'
+        else:
+            param = 'LONG'
+
+        # Check if connection is alive. If not, try to connect.
+        if not self.connection_state:
+            if not self.connect():
+                return False
+
+        # Try to set the speed
+        try:
+            query = str('SENS:CURR:APER:AUTO:MODE ' + param)
+            self.session.write(query)
+        except visa.Error:
+            self.connection_state = False
+            self.close_connection()
+            return False
+
+    def set_range(self, range_number):
+        """ Method for setting the measurement range.
+        Assignment is as follows:
+        range_number:   [  1     2      3       4     5      6      7      8      9      10     11 ]
+        MAX_Value:      [2 pA, 20 pA, 200 pA, 2 nA, 20 nA, 200 nA, 2 uA, 20 uA, 200 uA, 2 mA, 20 mA]
+
+        :param range: measurement range, must be int 200, string 'quick', 'normal' or 'stable'
+        :exception TypeError: If range is not  is not string
+        :exception ValueError: If speed string or not valid
+        :return: None
+        """
+
+        # Check input parameters
+        if not isinstance(range_number, int):
+            raise TypeError
+
+        if range_number < 0 or range_number > 11:
+            raise ValueError
+
+        # Check if connection is alive. If not, try to connect.
+        if not self.connection_state:
+            if not self.connect():
+                return False
+
+        # Try to set the speed
+        try:
+            query = str('SENS:CURR:RANG:UPP UP')
+            self.session.write(query)
+            query = str('SENS:CURR:RANG:AUTO 0')
+            self.session.write(query)
         except visa.Error:
             self.connection_state = False
             self.close_connection()
