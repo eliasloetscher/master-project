@@ -80,7 +80,7 @@ def gui():
     SafetyCircuitFrame(root, labjack, relays)
     ControlFrame(root, labjack, relays, electrometer, hvamp)
     MeasurementFrame(root, electrometer, hvamp, humidity_sensor, labjack)
-    RecordingFrame(root, electrometer, hvamp, humidity_sensor, labjack)
+    RecordingFrame(root, electrometer, hvamp, humidity_sensor, labjack, relays)
 
     # Introduce closing action with protocol handler
     root.protocol("WM_DELETE_WINDOW", lambda: on_closing(root, relays))

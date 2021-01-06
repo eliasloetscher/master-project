@@ -17,7 +17,7 @@ class RecordingFrame:
     stop_recording()    Finish method, task is done once at the end if user stops the recording process
     """
 
-    def __init__(self, root, electrometer, hvamp, hum_sensor, labjack):
+    def __init__(self, root, electrometer, hvamp, hum_sensor, labjack, relays):
         """ Constructor of the class RecordingFrame
 
         For the following device parameters, use the corresponding class in the package 'devices'
@@ -33,6 +33,7 @@ class RecordingFrame:
         self.hvamp = hvamp
         self.hum_sensor = hum_sensor
         self.labjack = labjack
+        self.relays = relays
 
         # Initialize recording vars and set default values
         self.after_id = None
@@ -53,19 +54,18 @@ class RecordingFrame:
         recording_frame_title.grid(padx=5, pady=5, sticky="W")
 
         # Set and place filename label and entry field
-        tk.Label(self.recording_frame, text="Set filename:").grid(row=1, padx=(10, 0), pady=10, sticky="W")
+        tk.Label(self.recording_frame, text="Choose filename:").grid(row=1, padx=(10, 0), pady=10, sticky="W")
         self.filename = tk.Entry(self.recording_frame, width=30)
-        self.filename.grid(row=1, column=1, padx=(10, 0), pady=10, sticky="W", columnspan=3)
+        self.filename.grid(row=1, column=1, padx=(10, 0), pady=10, sticky="W", columnspan=4)
 
         # Set and place 'start' and 'stop' buttons
-        start_button = tk.Button(self.recording_frame, text="Start", command=self.start_recording)
-        stop_button = tk.Button(self.recording_frame, text="Stop", command=self.stop_recording)
-        start_button.grid(row=1, column=4, sticky="W", padx=(10, 0), pady=10)
-        stop_button.grid(row=1, column=5, sticky="W", padx=(10, 0), pady=10)
-
-        # Set and place button for new automated measurement
-        auto_runtime_button = tk.Button(self.recording_frame, text="Start auto runtime", command=self.auto_run_init)
-        auto_runtime_button.grid(row=2, sticky="W", padx=(10, 0), pady="10")
+        tk.Label(self.recording_frame, text="Control recordings: ").grid(row=2, padx=(10, 0), pady=10, sticky="W")
+        start_button = tk.Button(self.recording_frame, text="Manual start ", command=self.start_recording)
+        stop_button = tk.Button(self.recording_frame, text="Manual stop", command=self.stop_recording)
+        auto_runtime_button = tk.Button(self.recording_frame, text="Setup auto rec", command=self.auto_run_init)
+        start_button.grid(row=2, column=1, sticky="W", padx=(10, 0), pady=10)
+        stop_button.grid(row=2, column=2, sticky="W", padx=(10, 0), pady=10)
+        auto_runtime_button.grid(row=2, column=3, sticky="W", padx=(10, 0), pady=10)
 
         # Set and place recording state frame
         self.state_frame = tk.Frame(self.recording_frame, width=50, height=50, highlightbackground="black",
@@ -73,7 +73,26 @@ class RecordingFrame:
         self.state_frame.place(x=580, y=80)
 
     def auto_run_init(self):
-        AutoRunFrame(self.root, self.electrometer, self.hvamp, self.hum_sensor, self.labjack)
+        # check if recording is already in progress
+        if self.after_id is not None:
+            tk.messagebox.showerror("Error", "Recording is already in progress")
+
+        # check if filename is specified
+        elif self.filename.get() == "":
+            tk.messagebox.showerror("Error", "Filename is not specified")
+
+        # check if safety circuit is closed
+        elif self.relays.safety_state == "open":
+            tk.messagebox.showerror("Error", "Close safety circuit first")
+
+        # check if ampmeter is switched on
+        elif not self.electrometer.ampmeter_state:
+            tk.messagebox.showerror("Error", "Switch on ampmeter first")
+
+        # ready for recording
+        else:
+            AutoRunFrame(self.root, self.electrometer, self.hvamp, self.hum_sensor, self.labjack, self.relays,
+                         self.filename.get())
 
     def start_recording(self):
         """ Setting up various tasks for starting to record. If successfull, the method record() is started.

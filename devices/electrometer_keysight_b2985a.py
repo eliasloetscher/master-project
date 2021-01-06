@@ -55,6 +55,10 @@ class ElectrometerControl:
         # State of the ampere meter: enabled (True) or disabled (False)
         self.ampmeter_state = False
 
+        # measurement range variable (0 corresponds to 'auto')
+        self.range = 0
+        self.range_mode = 'auto'
+
         # Try to connect
         self.connect()
 
@@ -383,10 +387,10 @@ class ElectrometerControl:
     def set_range(self, range_number):
         """ Method for setting the measurement range.
         Assignment is as follows:
-        range_number:   [  1     2      3       4     5      6      7      8      9      10     11 ]
-        MAX_Value:      [2 pA, 20 pA, 200 pA, 2 nA, 20 nA, 200 nA, 2 uA, 20 uA, 200 uA, 2 mA, 20 mA]
+        range_number:   [  0     1     2      3       4     5      6      7      8      9      10     11 ]
+        MAX_Value:      [auto, 2 pA, 20 pA, 200 pA, 2 nA, 20 nA, 200 nA, 2 uA, 20 uA, 200 uA, 2 mA, 20 mA]
 
-        :param range: measurement range, must be int 200, string 'quick', 'normal' or 'stable'
+        :param range_number: measurement range, must be int 200, string 'quick', 'normal' or 'stable'
         :exception TypeError: If range is not  is not string
         :exception ValueError: If speed string or not valid
         :return: None
@@ -399,21 +403,74 @@ class ElectrometerControl:
         if range_number < 0 or range_number > 11:
             raise ValueError
 
+        # Check saved range
+        if self.range < 0 or self.range > 11:
+            raise ValueError
+
         # Check if connection is alive. If not, try to connect.
         if not self.connection_state:
             if not self.connect():
                 return False
 
-        # Try to set the speed
-        try:
-            query = str('SENS:CURR:RANG:UPP UP')
-            self.session.write(query)
-            query = str('SENS:CURR:RANG:AUTO 0')
-            self.session.write(query)
-        except visa.Error:
-            self.connection_state = False
-            self.close_connection()
-            return False
+        # Try to set the speed to auto
+        if range_number == 0:
+            try:
+                query = str('SENS:CURR:RANG:AUTO 1')
+                self.session.write(query)
+                self.range_mode = 'auto'
+            except visa.Error:
+                self.connection_state = False
+                self.close_connection()
+                return False
+        else:
+            # detect if mode was auto in the last call, and if so, initialize manual mode range to MAX
+            if self.range_mode == 'auto':
+                try:
+                    query = str('SENS:CURR:RANG:UPP MAX')
+                    self.session.write(query)
+                    self.range = 11
+                    print("reset range to MAX")
+                    self.range_mode = 'manual'
+                except visa.Error:
+                    self.connection_state = False
+                    self.close_connection()
+                    return False
+
+            # disable auto range
+            try:
+                query = str('SENS:CURR:RANG:AUTO 0')
+                self.session.write(query)
+            except visa.Error:
+                self.connection_state = False
+                self.close_connection()
+                return False
+
+            if range_number > self.range:
+                # increase range until desired range is reached
+                while range_number > self.range:
+                    try:
+                        query = str('SENS:CURR:RANG:UPP UP')
+                        self.session.write(query)
+                        self.range += 1
+                    except visa.Error:
+                        self.connection_state = False
+                        self.close_connection()
+                        return False
+
+            elif range_number < self.range:
+                # decrease range until desired range is reached
+                while range_number < self.range:
+                    try:
+                        query = str('SENS:CURR:RANG:UPP DOWN')
+                        self.session.write(query)
+                        self.range -= 1
+                    except visa.Error:
+                        self.connection_state = False
+                        self.close_connection()
+                        return False
+
+            else:
+                raise ValueError
 
     def close_connection(self):
         """ Closes the usb connection (session and resource manager) and resets the connection state var
