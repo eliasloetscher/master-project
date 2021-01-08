@@ -42,6 +42,11 @@ def measure_voltage(hvamp, labjack):
 def measure_current(electrometer):
     result = electrometer.get_current()
     result_in_picoampere = round(float(result)*1000*1000*1000*1000, 5)
+
+    # check for overflow (current larger than measure range max limit, in this case 1E50 pA is 'measured')
+    if abs(result_in_picoampere) > pow(10, 20):
+        print("OVERFLOW OCCURRED!")
+        return 0
     return result_in_picoampere
 
 
