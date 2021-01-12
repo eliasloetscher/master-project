@@ -120,7 +120,8 @@ class RecordingFrame:
 
                 # Create log file with data information (DO NOT CHANGE)
                 log.create_logfile(self.filename.get())
-                log.log_message("date, time, absolute_time, voltage, current, temperature, humidity")
+                log.log_message("Params: date, time, absolute_time, voltage, current, temperature, humidity, measurement_range_id")
+                log.log_message("Units: -,-,ms,V,pA,°C,RHin%,-")
 
                 # Start to record
                 self.record()
@@ -133,6 +134,9 @@ class RecordingFrame:
 
         # Get all sensor values
         values = measure.measure_all_values(self.electrometer, self.hvamp, self.hum_sensor, self.labjack)
+
+        # Append measurement range
+        values.append(self.electrometer.range)
 
         # Log all values
         log.log_values(values)

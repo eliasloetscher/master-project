@@ -54,7 +54,8 @@ def create_logfile(name):
 def log_all_values(electrometer, hvamp, humidity_sensor):
 
     # write variable name line
-    log_message("date, time, absolute_time, voltage, current, temperature, humidity")
+    log_message("date, time, absolute_time, voltage, current, temperature, hum_sensor_humidity, hum_sensor_temp, "
+                "measurement_range")
 
     # Get all sensor values
     values = measure.measure_all_values(electrometer, hvamp, humidity_sensor)
