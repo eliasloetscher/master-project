@@ -452,6 +452,7 @@ class ElectrometerControl:
                         query = str('SENS:CURR:RANG:UPP UP')
                         self.session.write(query)
                         self.range += 1
+                        time.sleep(0.1)
                     except visa.Error:
                         self.connection_state = False
                         self.close_connection()
@@ -464,11 +465,13 @@ class ElectrometerControl:
                         query = str('SENS:CURR:RANG:UPP DOWN')
                         self.session.write(query)
                         self.range -= 1
+                        time.sleep(0.1)
                     except visa.Error:
                         self.connection_state = False
                         self.close_connection()
                         return False
-
+            elif range_number == self.range:
+                pass
             else:
                 raise ValueError
 

@@ -121,7 +121,7 @@ class RecordingFrame:
                 # Create log file with data information (DO NOT CHANGE)
                 log.create_logfile(self.filename.get())
                 log.log_message("Params: date, time, absolute_time, voltage, current, temperature, humidity, measurement_range_id")
-                log.log_message("Units: -,-,ms,V,pA,°C,RHin%,-")
+                log.log_message("Units: -,-,s,V,pA,°C,RHin%,-")
 
                 # Start to record
                 self.record()

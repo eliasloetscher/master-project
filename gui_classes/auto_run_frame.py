@@ -48,12 +48,22 @@ class AutoRunFrame:
         self.t_one_result = None
         self.t_two_result = None
         self.t_three_result = None
+        self.t_start = None
         self.voltage_result = None
         self.man_label = None
         self.man_but1 = None
         self.man_but2 = None
         self.range_dropdown = None
         self.speed_dropdown = None
+        self.values = [-1, -1, -1, -1, -1]
+
+        self.overflow_flag = False
+        self.switch_lower_flag = False
+        self.after_id_auto_range = None
+
+        self.switched_t_one_flag = False
+        self.switched_t_two_flag = False
+        self.switched_t_three_flag = False
 
         # Initialize setup window
         self.autorun_setup_window = tk.Toplevel(self.root)
@@ -218,9 +228,17 @@ class AutoRunFrame:
     def measurement_runtime(self, step):
         if step == 0:
             print("STARTED STEP 0")
+            # init start time
+            self.t_start = time.time()  # time in seconds
+            # reset switch labels
+            self.switched_t_one_flag = False
+            self.switched_t_two_flag = False
+            self.switched_t_three_flag = False
             # Create log file with data information (DO NOT CHANGE)
             log.create_logfile(self.filename)
-            log.log_message("date, time, absolute_time, voltage, current, temperature, humidity")
+            log.log_message(
+                "Params: date, time, absolute_time, voltage, current, temperature, humidity, measurement_range_id")
+            log.log_message("Units: -,-,s,V,pA,°C,RHin%,-")
             # start log process
             self.record()
             # start plot
@@ -325,7 +343,7 @@ class AutoRunFrame:
         """
 
         # Get all sensor values
-        values = measure.measure_all_values(self.electrometer, self.hvamp, self.hum_sensor, self.labjack)
+        self.values = measure.measure_all_values(self.electrometer, self.hvamp, self.hum_sensor, self.labjack)
 
         # set start time in seconds with 2 decimal places in first iteration of record
         if self.after_id_record is None:
@@ -333,10 +351,13 @@ class AutoRunFrame:
 
         # update data list
         self.data_time_x.append(round(time.time()*1000-self.data_start_time, 2)/1000)
-        self.data_current_y.append(values[1])
+        self.data_current_y.append(self.values[1])
+
+        # Append measurement range
+        self.values.append(self.electrometer.range)
 
         # Log all values
-        log.log_values(values)
+        log.log_values(self.values)
 
         # Setup next record method call after specified measurement interval
         self.after_id_record = self.root.after(1000, self.record)
@@ -350,7 +371,11 @@ class AutoRunFrame:
         if tk.messagebox.askokcancel("Abort measurment", "Are you sure to abort the measurement?", parent=self.autorun_main_window):
             if self.after_id_record is not None:
                 self.root.after_cancel(self.after_id_record)
-            self.after_id_record = None
+                self.after_id_record = None
+
+            if self.after_id_plot is not None:
+                self.root.after_cancel(self.after_id_plot)
+                self.after_id_plot = None
 
             tk.messagebox.showinfo("Information", "Measurement aborted", parent=self.autorun_main_window)
 
@@ -379,17 +404,57 @@ class AutoRunFrame:
             raise ValueError
 
     def range_update(self, event):
-        self.electrometer.set_range(self.range_dropdown.current())
+        print("Range update: ", self.range_dropdown.current())
+        if int(self.range_dropdown.current()) == 0:
+            # init range
+            self.electrometer.set_range(5)
+            self.range_auto()
+        else:
+            if self.after_id_auto_range is not None:
+                self.root.after_cancel(self.after_id_auto_range)
+            self.electrometer.set_range(self.range_dropdown.current())
 
+    def range_auto(self):
 
+        ranges_in_p = [2, 20, 200, 2000, 2*pow(10, 4), 2*pow(10, 5), 2*pow(10, 6), 2*pow(10, 7), 2*pow(10, 8),
+                       2*pow(10, 9), 2*pow(10, 10)]
 
+        # switch to higher range if two overflow occured
+        if self.values[1] == 0 and self.electrometer.range < 11:
+            print("OVERFLOW OCCURRED! (method range_auto in auto_run_frame)")
+            if self.overflow_flag:
+                self.electrometer.set_range(self.electrometer.range + 1)
+                self.overflow_flag = False
+            else:
+                self.overflow_flag = True
+        else:
+            self.overflow_flag = False
 
+        # switch to lower range if two measurement values in a row are below next lower range
+        print("Current value", self.values[1])
+        print("Range value", ranges_in_p[self.electrometer.range - 1])
+        if abs(self.values[1]) < ranges_in_p[self.electrometer.range - 2] and self.electrometer.range > 1 and not self.values[1] == 0 and not self.values[1] == -1:
+            if self.switch_lower_flag:
+                self.electrometer.set_range(self.electrometer.range - 1)
+                self.switch_lower_flag = False
+            else:
+                self.switch_lower_flag = True
+        else:
+            self.switch_lower_flag = False
 
+        if self.t_start is not None:
+            time_since_start = time.time() - int(self.t_start)
+            # switch to 20 nA range shortly before time step one
+            if 1.5 > int(self.t_one_result) - time_since_start > 0 and self.t_one_result is not None:
+                print("TIME CONDITION FULLWILD one")
+                self.electrometer.set_range(5)
+                self.switch_lower_flag = False
 
+            # switch to 20 nA range shortly before time step two
+            elif 1.5 > int(self.t_one_result) + int(self.t_two_result) - time_since_start > 0 and self.t_two_result is not None:
+                print("TIME CONDITION FULLWILD two")
+                self.electrometer.set_range(5)
 
+        print("Range: ", self.electrometer.range)
 
-
-
-
-
-
+        self.after_id_auto_range = self.root.after(1000, self.range_auto)
