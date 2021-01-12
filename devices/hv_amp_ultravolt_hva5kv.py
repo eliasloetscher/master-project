@@ -49,14 +49,15 @@ class HVAmp:
             raise TypeError
 
         # Check if input parameter is in range
-        if output_voltage < 0 or output_voltage > 5000:
+        print(output_voltage)
+        if output_voltage < -5000 or output_voltage > 5000:
             raise ValueError
 
         # Map output voltage (0-5kV) to control voltage (0-10V)
         control_voltage = 0.002 * output_voltage
 
         # Check if mapping is not out of bounds
-        if control_voltage < 0 or control_voltage > 10:
+        if control_voltage < -10 or control_voltage > 10:
             raise ValueError
 
         # Try to set the output voltage via LJ DAC Tick

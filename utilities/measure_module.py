@@ -29,9 +29,14 @@ def measure_voltage(hvamp, labjack):
     voltage = 1000 * analog_read
 
     # correct with function
-    coefficients = [1.73204040e-06, 1.08167280e-02, 1.27723794e+00]
-    correction = coefficients[0]*pow(voltage, 2) + coefficients[1]*voltage + coefficients[2]
-    if voltage < 0:
+    if voltage > 3:
+        coefficients = [1.63206300e-06, 1.14120940e-02, 5.85082426e-01]
+        correction = coefficients[0]*pow(voltage, 2) + coefficients[1]*voltage + coefficients[2]
+
+    elif voltage < 3:
+        coefficients = [1.95647789e-06, -9.47588563e-03, -2.37081434e+00]
+        correction = -(coefficients[0]*pow(voltage, 2) + coefficients[1]*voltage + coefficients[2])
+    else:
         correction = 1.66
 
     real_voltage = voltage + correction

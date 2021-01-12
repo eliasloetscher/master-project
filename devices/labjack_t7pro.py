@@ -181,7 +181,7 @@ class LabjackConnection:
         if not isinstance(port, str) or not isinstance(voltage, float):
             raise TypeError
 
-        if voltage < 0 or voltage > 10:
+        if voltage < -10 or voltage > 10:
             raise ValueError
 
         # Generate write statement. Even TDAC# is DACA, odd TDAC# is DACB

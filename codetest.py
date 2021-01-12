@@ -9,9 +9,6 @@ import matplotlib.backends.backend_tkagg as tkagg
 from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
 from gui_classes.auto_run_frame import AutoRunFrame
 
-
-AutoRunFrame()
-
 """
 
 class App:
