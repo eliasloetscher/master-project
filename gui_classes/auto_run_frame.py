@@ -260,14 +260,19 @@ class AutoRunFrame:
                     # set voltage
                     self.relays.switch_relay("HV", "ON", self.labjack)
                     self.hvamp.set_voltage(int(self.voltage_result))
+                    # self.electrometer.enable_source_output()
+                    # self.electrometer.set_voltage(int(self.voltage_result))
+
                     # wait for t2
                     self.root.after(int(self.t_two_result)*1000, lambda: self.measurement_runtime(3))
 
                 elif step == 3:
                     print("PDC - STARTED STEP 3")
                     self.hvamp.set_voltage(0)
+                    # self.electrometer.set_voltage(0)
                     self.relays.switch_relay("HV", "OFF", self.labjack)
                     self.relays.switch_relay("GND", "ON", self.labjack)
+
                     # wait for t3
                     self.root.after(int(self.t_three_result)*1000, lambda: self.measurement_runtime(4))
 
@@ -445,13 +450,13 @@ class AutoRunFrame:
         if self.t_start is not None:
             time_since_start = time.time() - int(self.t_start)
             # switch to 20 nA range shortly before time step one
-            if 1.5 > int(self.t_one_result) - time_since_start > 0 and self.t_one_result is not None:
+            if 2 > int(self.t_one_result) - time_since_start > 0 and self.t_one_result is not None:
                 print("TIME CONDITION FULLWILD one")
                 self.electrometer.set_range(5)
                 self.switch_lower_flag = False
 
             # switch to 20 nA range shortly before time step two
-            elif 1.5 > int(self.t_one_result) + int(self.t_two_result) - time_since_start > 0 and self.t_two_result is not None:
+            elif 2 > int(self.t_one_result) + int(self.t_two_result) - time_since_start > 0 and self.t_two_result is not None:
                 print("TIME CONDITION FULLWILD two")
                 self.electrometer.set_range(5)
 
