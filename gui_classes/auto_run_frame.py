@@ -50,6 +50,7 @@ class AutoRunFrame:
         self.t_three_result = None
         self.t_start = None
         self.voltage_result = None
+        self.source_dropdown_result = None
         self.man_label = None
         self.man_but1 = None
         self.man_but2 = None
@@ -75,6 +76,13 @@ class AutoRunFrame:
         # Set title
         title = tk.Label(self.autorun_setup_window, text="Setup new measurement", font='Helvetica 12 bold')
         title.grid(padx=10, pady=10, sticky="W", columnspan=2)
+
+        # Place dropdown for source choice
+        tk.Label(self.autorun_setup_window, text="Source").grid()
+        choices = ['HV Amp', 'Electrometer']
+        self.source_dropdown = ttk.Combobox(self.autorun_setup_window, values=choices, width=10)
+        self.source_dropdown.current(0)
+        self.source_dropdown.grid(column=1, padx=10, pady=10, sticky="W")
 
         # Set and place voltage field
         tk.Label(self.autorun_setup_window, text="Voltage in V: ").grid(row=1, padx=10, pady=10, sticky="W")
@@ -134,6 +142,7 @@ class AutoRunFrame:
         self.t_two_result = self.t_two.get()
         self.t_three_result = self.t_three.get()
         self.voltage_result = self.voltage.get()
+        self.source_dropdown_result = self.source_dropdown.current()
 
         if self.voltage_result == '':
             tk.messagebox.showerror("Error", "Please specify the voltage.", parent=self.autorun_setup_window)
@@ -251,19 +260,25 @@ class AutoRunFrame:
             if self.dropdown_choice == 0:
                 if step == 1:
                     print("PDC - STARTED STEP 1")
+                    # Close GND relay for short-circuiting DUT
+                    self.relays.switch_relay("GND", "ON", self.labjack)
                     # wait for t1
                     print("WAIT FOR ", int(self.t_one_result)*1000)
                     self.root.after(int(self.t_one_result)*1000, lambda: self.measurement_runtime(2))
 
                 elif step == 2:
                     print("PDC - STARTED STEP 2")
+                    # Open GND relay
+                    self.relays.switch_relay("GND", "OFF", self.labjack)
                     # set voltage
+                    if self.source_dropdown_result == 0:
+                        self.hvamp.set_voltage(int(self.voltage_result))
+                    elif self.source_dropdown_result == 1:
+                        self.electrometer.enable_source_output()
+                        time.sleep(0.1)
+                        self.electrometer.set_voltage(int(self.voltage_result))
+                    # switch on HV relay
                     self.relays.switch_relay("HV", "ON", self.labjack)
-                    self.hvamp.set_voltage(int(self.voltage_result))
-                    # self.electrometer.enable_source_output()
-                    time.sleep(0.1)
-                    # self.electrometer.set_voltage(int(self.voltage_result))
-
                     # wait for t2
                     self.root.after(int(self.t_two_result)*1000, lambda: self.measurement_runtime(3))
 
@@ -291,15 +306,25 @@ class AutoRunFrame:
             elif self.dropdown_choice == 1:
                 if step == 1:
                     print("P ONLY - STARTED STEP 1")
+                    # Close GND relay for short-circuiting DUT
+                    self.relays.switch_relay("GND", "ON", self.labjack)
                     # wait for t1
                     print("WAIT FOR ", int(self.t_one_result)*1000)
                     self.root.after(int(self.t_one_result)*1000, lambda: self.measurement_runtime(2))
 
                 elif step == 2:
                     print("P ONLY - STARTED STEP 2")
+                    # Open GND relay
+                    self.relays.switch_relay("GND", "OFF", self.labjack)
                     # set voltage
+                    if self.source_dropdown_result == 0:
+                        self.hvamp.set_voltage(int(self.voltage_result))
+                    elif self.source_dropdown_result == 1:
+                        self.electrometer.enable_source_output()
+                        time.sleep(0.1)
+                        self.electrometer.set_voltage(int(self.voltage_result))
+                    # switch on HV relay
                     self.relays.switch_relay("HV", "ON", self.labjack)
-                    self.hvamp.set_voltage(int(self.voltage_result))
                     # wait for t2
                     self.root.after(int(self.t_two_result)*1000, lambda: self.measurement_runtime(3))
 
@@ -310,6 +335,7 @@ class AutoRunFrame:
                     log.finish_logging()
                     self.stop_plot()
                     self.hvamp.set_voltage(0)
+                    self.electrometer.set_voltage(0)
                     self.relays.switch_relay("HV", "OFF", self.labjack)
                     self.relays.switch_relay("GND", "ON", self.labjack)
                     tk.messagebox.showinfo("Finish", "Measurement was finished succesfully!", parent=self.autorun_main_window)

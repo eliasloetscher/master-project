@@ -1,5 +1,6 @@
 import tkinter as tk
 import tkinter.messagebox
+from tkinter import ttk
 
 
 class ControlFrame:
@@ -76,12 +77,19 @@ class ControlFrame:
         en.grid(row=3, column=2, pady=(10, 0), sticky="W")
         dis.grid(row=3, column=3, padx=(5, 0), pady=(10, 0), sticky="W")
 
+        # Place dropdown for source choice
+        tk.Label(self.control_frame, text="Source").grid(row=4, sticky="W", padx=(10, 0), pady=(30, 0))
+        choices = ['HV Amp', 'Electrometer']
+        self.source_dropdown = ttk.Combobox(self.control_frame, values=choices, width=10)
+        self.source_dropdown.current(0)
+        self.source_dropdown.grid(row=4, column=1, padx=(10, 0), pady=(30, 0), sticky="W", columnspan=2)
+
         # Place voltage entry field
-        tk.Label(self.control_frame, text="Voltage in V:").grid(row=4, sticky="W", padx=(10, 0), pady=(30, 0))
-        voltage = tk.Entry(self.control_frame, width=6)
-        voltage.grid(row=4, column=1, sticky="W", pady=(30, 0))
-        volt_button = tk.Button(self.control_frame, text="Set", command=lambda: hvamp.set_voltage(int(voltage.get())))
-        volt_button.grid(row=4, column=2, sticky="W", pady=(30, 0))
+        tk.Label(self.control_frame, text="Voltage in V:").grid(row=5, sticky="W", padx=(10, 0), pady=(30, 0))
+        self.voltage = tk.Entry(self.control_frame, width=6)
+        self.voltage.grid(row=5, column=1, sticky="W", pady=(30, 0))
+        volt_button = tk.Button(self.control_frame, text="Set", command=self.set_voltage())
+        volt_button.grid(row=5, column=2, sticky="W", pady=(30, 0))
 
         # Place label for control_message
         self.control_message = tk.Label(self.control_frame, text="", fg="red")
@@ -151,3 +159,12 @@ class ControlFrame:
         # ask user to confirm action
         if tk.messagebox.showwarning("Warning", message, type="okcancel") == 'ok':
             self.electrometer.enable_current_input()
+
+    def set_voltage(self):
+        if self.source_dropdown.current() == 0:
+            self.hvamp.set_voltage(int(self.voltage.get()))
+        elif self.source_dropdown.current() == 1:
+            self.electrometer.enable_source_output()
+            self.electrometer.set_voltage(int(self.voltage.get()))
+        else:
+            raise ValueError
