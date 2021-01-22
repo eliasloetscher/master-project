@@ -37,12 +37,12 @@ class SafetyCircuitFrame:
         safety_frame_title.grid(padx=5, pady=5, sticky="W", columnspan=2)
 
         # Place S1 state label
-        tk.Label(self.safety_circuit_frame, text="Pilz S1:").grid(row=1, sticky="W", padx=(10, 0))
+        tk.Label(self.safety_circuit_frame, text="Test cell:").grid(row=1, sticky="W", padx=(10, 0))
         self.s1_state_label = tk.Label(self.safety_circuit_frame, text="n/a")
         self.s1_state_label.grid(row=1, column=1, sticky="W", padx=(12, 0))
 
         # Place S2 state label
-        tk.Label(self.safety_circuit_frame, text="Pilz S2:").grid(row=2, sticky="W", padx=(10, 0), pady=(10, 0))
+        tk.Label(self.safety_circuit_frame, text="HV box:").grid(row=2, sticky="W", padx=(10, 0), pady=(10, 0))
         self.s2_state_label = tk.Label(self.safety_circuit_frame, text="n/a")
         self.s2_state_label.grid(row=2, column=1, sticky="W", padx=(12, 0), pady=(10, 0))
 

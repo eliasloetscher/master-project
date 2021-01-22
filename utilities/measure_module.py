@@ -7,7 +7,7 @@ def measure_all_values(electrometer, hvamp, humidity_sensor, labjack):
     :return: All sensor values
     """
 
-    hv_amp_voltage = round(measure_voltage(hvamp, labjack), 2)
+    hv_amp_voltage = round(measure_voltage(labjack), 2)
     electrometer_current = round(measure_current(electrometer), 2)
     electrometer_temperature = round(measure_temperature(electrometer), 2)
     humidity = round(measure_humidity(humidity_sensor), 2)
@@ -20,7 +20,7 @@ def measure_all_values(electrometer, hvamp, humidity_sensor, labjack):
     return values
 
 
-def measure_voltage(hvamp, labjack):
+def measure_voltage(labjack):
 
     # Get analog value
     analog_read = labjack.read_analog("AIN0")

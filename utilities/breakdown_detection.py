@@ -8,15 +8,20 @@ import utilities.measure_module as measure
 from parameters import Parameters
 
 
-def breakdown(hvamp, type, values):
+def breakdown(hvamp, labjack, electrometer, relays, type, values):
     """
 
     :param hvamp:
     :return:
     """
 
-    # Set voltage to zero
+    # Set voltages to zero
     hvamp.set_voltage(0)
+    electrometer.set_voltage(0)
+
+    # open HV relay, close GND relay for safety
+    relays.switch_relay("HV", "OFF", labjack)
+    relays.switch_relay("GND", "ON", labjack)
 
     # Print to console
     print("--------------------------------------------------------------------")
@@ -31,7 +36,7 @@ def breakdown(hvamp, type, values):
         time.sleep(1)
 
 
-def breakdown_detection(root, labjack, electrometer, hvamp, flag):
+def breakdown_detection(root, labjack, relays, electrometer, hvamp, flag):
     """
 
     :param flag:
@@ -48,25 +53,34 @@ def breakdown_detection(root, labjack, electrometer, hvamp, flag):
     # --------------- BREAKDOWN DETECTION VIA VOLTAGE --------------- #
 
     # Measure voltage
-    measured_voltage = measure.measure_voltage(hvamp, labjack)
+    measured_voltage = measure.measure_voltage(labjack)
 
-    # Get voltage currently set by user
-    user_voltage = hvamp.user_voltage
+    # get voltage currently set by user
+    user_voltage_hvamp = hvamp.user_voltage
+    user_voltage_electrometer = electrometer.user_voltage
+    if user_voltage_hvamp > 0:
+        user_voltage = user_voltage_hvamp
+    elif user_voltage_electrometer > 0:
+        user_voltage = user_voltage_electrometer
+    else:
+        user_voltage = 0
 
-    # Init values list
+    # init values list
     values = [measured_voltage, user_voltage]
 
-    # Calculate allowed absolute deviation from given percentage
+    # calculate allowed absolute deviation from given percentage
     voltage_deviation_abs = user_voltage*Parameters.BD_VOLTAGE_DEVIATION/100
 
-    # Check if voltage deviation is below limit
-    if abs(measured_voltage - user_voltage) > voltage_deviation_abs and user_voltage > 0:
-        if flag:
-            breakdown(hvamp, "Voltage", str("[HVAmp, Setbyuser]" + str(values) + " V"))
+    # check if hv relay is closed -> otherwise hv probe will measure zero volt
+    if relays.hv_relay_state == 'closed':
+        # check if voltage deviation is below limit
+        if abs(measured_voltage - user_voltage) > voltage_deviation_abs and user_voltage > 0:
+            if flag:
+                breakdown(hvamp, labjack, electrometer, relays, "Voltage", str("[Measured, Setbyuser]" + str(values) + " V"))
+            else:
+                flag_voltage = True
         else:
-            flag_voltage = True
-    else:
-        flag_voltage = False
+            flag_voltage = False
 
     # --------------- BREAKDOWN DETECTION VIA CURRENT --------------- #
 
@@ -87,7 +101,7 @@ def breakdown_detection(root, labjack, electrometer, hvamp, flag):
     # Check if current is below limit
     if measured_current_electrometer_in_ma > current_limit or measured_current_hvamp > current_limit:
         if flag:
-            breakdown(hvamp, "Current", str("[Electrometer, HVAmp, Setbyuser]" + str(values) + " mA"))
+            breakdown(hvamp, labjack, electrometer, relays, "Current", str("[Electrometer, HVAmp, Setbyuser]" + str(values) + " mA"))
         else:
             flag_current = True
     else:
@@ -100,7 +114,7 @@ def breakdown_detection(root, labjack, electrometer, hvamp, flag):
         flag = True
 
     # Check for breakdown periodically
-    root.after(Parameters.BD_INTERVAL*1000, lambda: breakdown_detection(root, labjack, electrometer, hvamp, flag))
+    root.after(Parameters.BD_INTERVAL*1000, lambda: breakdown_detection(root, relays, labjack, electrometer, hvamp, flag))
 
 
 

@@ -55,6 +55,9 @@ class ElectrometerControl:
         # State of the ampere meter: enabled (True) or disabled (False)
         self.ampmeter_state = False
 
+        # Initialize var for voltage set by user in V
+        self.user_voltage = 0
+
         # measurement range variable (0 corresponds to 'auto')
         self.range = 0
         self.range_mode = 'auto'
@@ -181,6 +184,7 @@ class ElectrometerControl:
         try:
             query = str(':SOUR:VOLT ' + str(voltage))
             self.session.write(query)
+            self.user_voltage = voltage
         except visa.Error:
             self.connection_state = False
             self.close_connection()

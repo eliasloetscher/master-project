@@ -54,10 +54,10 @@ class Relays:
             s1_state = self.labjack.read_digital(Parameters.LJ_DIGITAL_IN_PILZ_S1)
             s2_state = self.labjack.read_digital(Parameters.LJ_DIGITAL_IN_PILZ_S2)
             if s1_state == "LOW":
-                self.safety_message = "Error! Close Pilz S1 first."
+                self.safety_message = "Error! Close Test cell first."
                 return
             elif s2_state == "HIGH":
-                self.safety_message = "Error! Close Pilz S2 first"
+                self.safety_message = "Error! Close HV box first"
                 return
 
         # Check if state is valid and prepare to switch

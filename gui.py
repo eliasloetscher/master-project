@@ -19,7 +19,7 @@ import utilities.breakdown_detection as bd
 from parameters import Parameters
 
 
-def on_closing(root, relays, hvamp):
+def on_closing(root, electrometer, relays, hvamp):
     """ Method which is called if the user explicitly quits the gui, i.e. clicks on the "X" button on top right corner
 
     :param root: tkinter root instance
@@ -33,6 +33,10 @@ def on_closing(root, relays, hvamp):
         relays.switch_off_all_relays()
         # Set LJ-Tick voltage to zero (hvamp control voltage)
         hvamp.set_voltage(0)
+        # Set Electrometer voltage to zero, disable ammeter and source
+        electrometer.set_voltage(0)
+        electrometer.disable_current_input()
+        electrometer.disable_source_output()
         # Close tkinter instance
         root.destroy()
 
@@ -65,7 +69,7 @@ def gui():
     safety.start_safety_circuit(root, labjack, relays, electrometer, hvamp)
 
     # Start breakdown detection
-    # bd.breakdown_detection(root, labjack, electrometer, hvamp, False)
+    bd.breakdown_detection(root, labjack, relays, electrometer, hvamp, False)
 
     # Set gui name
     root.title("MVISS")
@@ -85,7 +89,7 @@ def gui():
     RecordingFrame(root, electrometer, hvamp, humidity_sensor, labjack, relays)
 
     # Introduce closing action with protocol handler
-    root.protocol("WM_DELETE_WINDOW", lambda: on_closing(root, relays, hvamp))
+    root.protocol("WM_DELETE_WINDOW", lambda: on_closing(root, electrometer, relays, hvamp))
 
     # Execute GUI
     root.mainloop()
