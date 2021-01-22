@@ -114,7 +114,7 @@ def breakdown_detection(root, labjack, relays, electrometer, hvamp, flag):
         flag = True
 
     # Check for breakdown periodically
-    root.after(Parameters.BD_INTERVAL*1000, lambda: breakdown_detection(root, relays, labjack, electrometer, hvamp, flag))
+    root.after(Parameters.BD_INTERVAL*1000, lambda: breakdown_detection(root, labjack, relays, electrometer, hvamp, flag))
 
 
 

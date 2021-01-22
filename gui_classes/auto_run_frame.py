@@ -78,23 +78,23 @@ class AutoRunFrame:
         title.grid(padx=10, pady=10, sticky="W", columnspan=2)
 
         # Place dropdown for source choice
-        tk.Label(self.autorun_setup_window, text="Source").grid()
+        tk.Label(self.autorun_setup_window, text="Source").grid(row=1, padx=10, pady=10, sticky="W")
         choices = ['HV Amp', 'Electrometer']
         self.source_dropdown = ttk.Combobox(self.autorun_setup_window, values=choices, width=10)
         self.source_dropdown.current(0)
-        self.source_dropdown.grid(column=1, padx=10, pady=10, sticky="W")
+        self.source_dropdown.grid(row=1, column=1, padx=10, pady=10, sticky="W")
 
         # Set and place voltage field
-        tk.Label(self.autorun_setup_window, text="Voltage in V: ").grid(row=1, padx=10, pady=10, sticky="W")
+        tk.Label(self.autorun_setup_window, text="Voltage in V: ").grid(row=2, padx=10, pady=10, sticky="W")
         self.voltage = tk.Entry(self.autorun_setup_window, width=5)
-        self.voltage.grid(row=1, column=1, padx=10, pady=10, sticky="W")
+        self.voltage.grid(row=2, column=1, padx=10, pady=10, sticky="W")
 
         # Init dropdown menu
-        tk.Label(self.autorun_setup_window, text="Type:").grid(row=2, padx=10, pady=10, sticky="W")
+        tk.Label(self.autorun_setup_window, text="Type:").grid(row=3, padx=10, pady=10, sticky="W")
         choices = ['PDC', 'P only', "D only", 'Manual']
         self.dropdown = ttk.Combobox(self.autorun_setup_window, values=choices, width=10)
         self.dropdown.current(0)
-        self.dropdown.grid(row=2, column=1, padx=10, pady=10, sticky="W", columnspan=2)
+        self.dropdown.grid(row=3, column=1, padx=10, pady=10, sticky="W", columnspan=2)
 
         # Bind dropdown selection event to function
         self.dropdown.bind("<<ComboboxSelected>>", self.dropdown_update)
@@ -114,7 +114,7 @@ class AutoRunFrame:
         self.dropdown_update("")
 
         # Set and place button to main frame
-        tk.Button(self.autorun_setup_window, text="Next", command=self.auto_run_main).grid(row=8, padx=10, pady=15, sticky="W")
+        tk.Button(self.autorun_setup_window, text="Next", command=self.auto_run_main).grid(row=9, padx=10, pady=15, sticky="W")
 
     def reset_elements(self):
         for element in self.all_labels:
@@ -127,15 +127,15 @@ class AutoRunFrame:
             self.reset_elements()
         else:
             self.reset_elements()
-            self.times_title.grid(row=4, padx=10, pady=10, sticky="W", columnspan=2)
-            self.t_one_label.grid(row=5, padx=10, pady=10, sticky="W")
-            self.t_two_label.grid(row=6, padx=10, pady=10, sticky="W")
-            self.t_one.grid(row=5, column=1, padx=10, pady=10, sticky="W")
-            self.t_two.grid(row=6, column=1, padx=10, pady=10, sticky="W")
+            self.times_title.grid(row=5, padx=10, pady=(15, 5), sticky="W", columnspan=2)
+            self.t_one_label.grid(row=6, padx=10, pady=5, sticky="W")
+            self.t_two_label.grid(row=7, padx=10, pady=5, sticky="W")
+            self.t_one.grid(row=6, column=1, padx=10, pady=5, sticky="W")
+            self.t_two.grid(row=7, column=1, padx=10, pady=5, sticky="W")
 
             if self.dropdown.current() == 0:
-                self.t_three_label.grid(row=7, padx=10, pady=10, sticky="W")
-                self.t_three.grid(row=7, column=1, padx=10, pady=10, sticky="W")
+                self.t_three_label.grid(row=8, padx=10, pady=5, sticky="W")
+                self.t_three.grid(row=8, column=1, padx=10, pady=5, sticky="W")
 
     def auto_run_main(self):
         self.t_one_result = self.t_one.get()
@@ -246,8 +246,8 @@ class AutoRunFrame:
             # Create log file with data information (DO NOT CHANGE)
             log.create_logfile(self.filename)
             log.log_message(
-                "Params: date, time, absolute_time, voltage, current, temperature, humidity, measurement_range_id")
-            log.log_message("Units: -,-,s,V,pA,°C,RHin%,-")
+                "Params: date, time, absolute_time, voltage, current, temperature, humidity, measurement_range_id, measurement_speed")
+            log.log_message("Units: -,-,s,V,pA,°C,RHin%,-,-")
             # start log process
             self.record()
             # start plot
@@ -387,6 +387,9 @@ class AutoRunFrame:
 
         # Append measurement range
         self.values.append(self.electrometer.range)
+
+        # append measurement speed
+        self.values.append(self.electrometer.speed)
 
         # Log all values
         log.log_values(self.values)

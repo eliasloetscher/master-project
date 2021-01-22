@@ -62,6 +62,9 @@ class ElectrometerControl:
         self.range = 0
         self.range_mode = 'auto'
 
+        # measurement speed variable
+        self.speed = 'normal'
+
         # Try to connect
         self.connect()
 
@@ -383,6 +386,7 @@ class ElectrometerControl:
         try:
             query = str('SENS:CURR:APER:AUTO:MODE ' + param)
             self.session.write(query)
+            self.speed = speed
         except visa.Error:
             self.connection_state = False
             self.close_connection()

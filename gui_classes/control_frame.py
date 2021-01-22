@@ -73,23 +73,23 @@ class ControlFrame:
         self.ampmeter_state_label = tk.Label(self.control_frame, text="n/a")
         self.ampmeter_state_label.grid(row=3, column=1, sticky="W", pady=(10, 0))
         en = tk.Button(self.control_frame, text="Enable", width=7, command=self.enable_electrometer)
-        dis = tk.Button(self.control_frame, text="Disable", width=7, command=self.electrometer.disable_current_input)
+        dis = tk.Button(self.control_frame, text="Disable", width=7, command=self.disable_electrometer)
         en.grid(row=3, column=2, pady=(10, 0), sticky="W")
         dis.grid(row=3, column=3, padx=(5, 0), pady=(10, 0), sticky="W")
 
         # Place dropdown for source choice
-        tk.Label(self.control_frame, text="Source").grid(row=4, sticky="W", padx=(10, 0), pady=(30, 0))
-        choices = ['HV Amp', 'Electrometer']
+        tk.Label(self.control_frame, text="Source:").grid(row=4, sticky="W", padx=(10, 0), pady=(30, 0))
+        choices = ['HV amp', 'Electrometer']
         self.source_dropdown = ttk.Combobox(self.control_frame, values=choices, width=10)
         self.source_dropdown.current(0)
-        self.source_dropdown.grid(row=4, column=1, padx=(10, 0), pady=(30, 0), sticky="W", columnspan=2)
+        self.source_dropdown.grid(row=4, column=1, pady=(30, 0), sticky="W", columnspan=2)
 
         # Place voltage entry field
-        tk.Label(self.control_frame, text="Voltage in V:").grid(row=5, sticky="W", padx=(10, 0), pady=(30, 0))
+        tk.Label(self.control_frame, text="Voltage in V:").grid(row=5, sticky="W", padx=(12, 0), pady=(20, 0))
         self.voltage = tk.Entry(self.control_frame, width=6)
-        self.voltage.grid(row=5, column=1, sticky="W", pady=(30, 0))
-        volt_button = tk.Button(self.control_frame, text="Set", command=self.set_voltage())
-        volt_button.grid(row=5, column=2, sticky="W", pady=(30, 0))
+        self.voltage.grid(row=5, column=1, sticky="W", pady=(20, 0))
+        volt_button = tk.Button(self.control_frame, text="Set", command=self.set_voltage)
+        volt_button.grid(row=5, column=2, sticky="W", pady=(20, 0))
 
         # Place label for control_message
         self.control_message = tk.Label(self.control_frame, text="", fg="red")
@@ -158,7 +158,21 @@ class ControlFrame:
 
         # ask user to confirm action
         if tk.messagebox.showwarning("Warning", message, type="okcancel") == 'ok':
-            self.electrometer.enable_current_input()
+            if self.electrometer.check_connection():
+                self.electrometer.enable_current_input()
+            else:
+                tk.messagebox.showerror("Error", "Electrometer is not connected!")
+
+    def disable_electrometer(self):
+        """ Disables the amperemeter of the electrometer
+
+        :return: None
+        """
+
+        if self.electrometer.check_connection():
+            self.electrometer.disable_current_input()
+        else:
+            tk.messagebox.showerror("Error", "Electrometer is not connected!")
 
     def set_voltage(self):
         if self.source_dropdown.current() == 0:
