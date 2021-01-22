@@ -9,6 +9,18 @@ import matplotlib.backends.backend_tkagg as tkagg
 from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
 from gui_classes.auto_run_frame import AutoRunFrame
 
+data_time = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+data_points = [0, 1, 0, 3, 0, 0, 6, 7, 8, 0]
+
+for i in range(0, len(data_time)):
+    index_mirrored = len(data_time) - i - 1
+    if data_points[index_mirrored] == 0:
+        del (data_points[index_mirrored])
+        del (data_time[index_mirrored])
+
+print(data_time)
+print(data_points)
+
 """
 
 class App:

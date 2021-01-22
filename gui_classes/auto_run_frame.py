@@ -261,6 +261,7 @@ class AutoRunFrame:
                     self.relays.switch_relay("HV", "ON", self.labjack)
                     self.hvamp.set_voltage(int(self.voltage_result))
                     # self.electrometer.enable_source_output()
+                    time.sleep(0.1)
                     # self.electrometer.set_voltage(int(self.voltage_result))
 
                     # wait for t2
@@ -269,7 +270,7 @@ class AutoRunFrame:
                 elif step == 3:
                     print("PDC - STARTED STEP 3")
                     self.hvamp.set_voltage(0)
-                    # self.electrometer.set_voltage(0)
+                    self.electrometer.set_voltage(0)
                     self.relays.switch_relay("HV", "OFF", self.labjack)
                     self.relays.switch_relay("GND", "ON", self.labjack)
 
