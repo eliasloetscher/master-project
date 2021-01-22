@@ -342,7 +342,7 @@ class MeasurementFrame:
         # Add correct list elements depending on plot
         if plot == "volt":
             objects = [self.graph_volt, self.ax_volt]
-            data = [datapoints, measure.measure_voltage(self.hvamp, self.labjack)]
+            data = [datapoints, measure.measure_voltage(self.labjack)]
             settings = [self.linlogmode_voltage.get(), "Datapoints", "Voltage in V"]
         elif plot == "current":
             objects = [self.graph_current, self.ax_current]

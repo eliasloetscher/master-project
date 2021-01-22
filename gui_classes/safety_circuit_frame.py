@@ -80,14 +80,17 @@ class SafetyCircuitFrame:
         s2_state = self.labjack.read_digital(Parameters.LJ_DIGITAL_IN_PILZ_S2)
         relay_state_text = self.relays.safety_state
 
+        # handle error messages (remember no/nc switch mechanisms HIGH/LOW)
+        if s1_state == "HIGH" and s2_state == "LOW" and not self.relays.safety_message == "":
+            # clear error message
+            self.relays.safety_message = ""
+            if Parameters.DEBUG:
+                print("cleared safety error message")
+        self.safety_message.configure(text=self.relays.safety_message)
+
         # Prepare s1 label text (switch: normally closed)
         if s1_state == "HIGH":
             s1_label_text = "closed"
-            # Clear error message
-            if not self.relays.safety_message == "":
-                self.relays.safety_message = ""
-                if Parameters.DEBUG:
-                    print("cleared safety error message")
         elif s1_state == "LOW":
             s1_label_text = "open"
         elif not s1_state:
@@ -132,7 +135,6 @@ class SafetyCircuitFrame:
         self.s1_state_label.configure(text=s1_label_text, fg=label_colours[0])
         self.s2_state_label.configure(text=s2_label_text, fg=label_colours[1])
         self.relay_state_label.configure(text=relay_state_text, fg=label_colours[2])
-        self.safety_message.configure(text=self.relays.safety_message)
 
         # Update state frame
         if s1_label_text == 'closed' and s2_label_text == 'closed' and relay_state_text == 'closed':

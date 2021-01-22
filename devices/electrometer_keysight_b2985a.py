@@ -2,6 +2,7 @@ import pyvisa as visa
 from parameters import Parameters
 from pyvisa import VisaIOError
 import time
+import tkinter.messagebox
 
 
 class InterlockError(Exception):

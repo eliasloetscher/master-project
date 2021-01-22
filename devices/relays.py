@@ -1,5 +1,6 @@
 from parameters import Parameters
 from labjack.ljm import LJMError
+import tkinter.messagebox
 
 
 class Relays:
@@ -16,7 +17,6 @@ class Relays:
         self.lamp_state = "n/a"
 
         # Init message var
-        self.control_message = ""
         self.safety_message = ""
 
     def switch_relay(self, name, state, labjack):
@@ -46,7 +46,7 @@ class Relays:
         if self.safety_state == "open":
             if name == 'HV' or name == 'GND':
                 if state == "ON":
-                    self.control_message = "Error! Close safety circuit first."
+                    tkinter.messagebox.showerror("ERROR", "Close safety circuit first.")
                     return
 
         # Check if safety relay is intended to close while Pilz S1 or Pilz S2 is open
@@ -54,10 +54,10 @@ class Relays:
             s1_state = self.labjack.read_digital(Parameters.LJ_DIGITAL_IN_PILZ_S1)
             s2_state = self.labjack.read_digital(Parameters.LJ_DIGITAL_IN_PILZ_S2)
             if s1_state == "LOW":
-                self.safety_message = "Error! Close Test cell first."
+                self.safety_message = "Error! Close test cell first."
                 return
             elif s2_state == "HIGH":
-                self.safety_message = "Error! Close HV box first"
+                self.safety_message = "Error! Close high voltage box first"
                 return
 
         # Check if state is valid and prepare to switch
@@ -87,21 +87,18 @@ class Relays:
                 print("write port: ", port, " value, ", write)
             labjack.write_digital(port, write)
         except (ValueError, TypeError, LJMError):
-            self.control_message = "Error! Check labjack connection."
+            tkinter.messagebox.showerror("ERROR", "Check labjack connection.")
             return "Error! Check labjack connection."
         else:
             # if write process is successful, change class relay state
             if name == 'SAFETY':
                 self.safety_state = state_to_store
-                self.control_message = ""
                 return "Success! Safety relay switched."
             elif name == 'HV':
                 self.hv_relay_state = state_to_store
-                self.control_message = ""
                 return "Success! HV relay switched."
             elif name == 'GND':
                 self.gnd_relay_state = state_to_store
-                self.control_message = ""
                 return "Success! GND relay switched."
             elif name == "LAMP":
                 self.lamp_state = state_to_store

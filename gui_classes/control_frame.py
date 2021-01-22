@@ -1,6 +1,7 @@
 import tkinter as tk
 import tkinter.messagebox
 from tkinter import ttk
+from devices.electrometer_keysight_b2985a import InterlockError
 
 
 class ControlFrame:
@@ -91,10 +92,6 @@ class ControlFrame:
         volt_button = tk.Button(self.control_frame, text="Set", command=self.set_voltage)
         volt_button.grid(row=5, column=2, sticky="W", pady=(20, 0))
 
-        # Place label for control_message
-        self.control_message = tk.Label(self.control_frame, text="", fg="red")
-        self.control_message.grid(row=5, sticky="W", padx=10, pady=(30, 0), columnspan=3)
-
         # Initialize high voltage state frame, will be set to a green or red background depending on the state
         self.state_frame = tk.Frame(self.control_frame, width=50, height=50,
                                     highlightthickness=1, highlightbackground="black", bg="green")
@@ -135,7 +132,6 @@ class ControlFrame:
         # Update state labels
         self.hv_relay_state_label.configure(text=label_text[0], fg=label_colours[0])
         self.gnd_relay_state_label.configure(text=label_text[1], fg=label_colours[1])
-        self.control_message.configure(text=self.relays.control_message)
         self.ampmeter_state_label.configure(text=ampmeter_text, fg=ampmeter_color)
 
         # Update state frame (red if hv relay is closed, green otherwise)
@@ -179,6 +175,11 @@ class ControlFrame:
             self.hvamp.set_voltage(int(self.voltage.get()))
         elif self.source_dropdown.current() == 1:
             self.electrometer.enable_source_output()
-            self.electrometer.set_voltage(int(self.voltage.get()))
+            try:
+                self.electrometer.set_voltage(int(self.voltage.get()))
+            except InterlockError:
+                tkinter.messagebox.showerror("ERROR",
+                                             "Electrometer Interlock Error. \nHigh Voltage cannot be enabled because"
+                                             "interlock is not closed.")
         else:
             raise ValueError

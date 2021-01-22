@@ -31,8 +31,15 @@ def breakdown(hvamp, labjack, electrometer, relays, type, values):
     print("--------------------------------------------------------------------")
 
     # Inform user in GUI
-    message = str("Breakdown detected! \n\nType: " + str(type) + "\nValues: " + str(values))
-    while not tkinter.messagebox.showerror("BREAKDOWN", message) == "ok":
+    if type == 'Voltage':
+        message = str("Voltage deviation! \n\nValues: " + str(values)+"\n\nPossible reasons: \n-Wrong source connected"
+                                                                      "\n-Both relays closed\n-Breakdown occurred")
+    elif type == 'Current':
+        message = str("Current limit exceeded! \n\nValues: " + str(values)+"\n\n Please check setup!")
+    else:
+        raise ValueError
+
+    while not tkinter.messagebox.showerror("ERROR", message) == "ok":
         time.sleep(1)
 
 
@@ -74,7 +81,7 @@ def breakdown_detection(root, labjack, relays, electrometer, hvamp, flag):
     # check if hv relay is closed -> otherwise hv probe will measure zero volt
     if relays.hv_relay_state == 'closed':
         # check if voltage deviation is below limit
-        if abs(measured_voltage - user_voltage) > voltage_deviation_abs and user_voltage > 0:
+        if abs(measured_voltage - user_voltage) > voltage_deviation_abs and user_voltage > 10:
             if flag:
                 breakdown(hvamp, labjack, electrometer, relays, "Voltage", str("[Measured, Setbyuser]" + str(values) + " V"))
             else:
