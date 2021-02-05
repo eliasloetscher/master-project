@@ -39,7 +39,7 @@ class Visualization:
 
         # Set global options
         self.root.option_add("*Font", "TkDefaultFont 12")
-        self.root.geometry('1250x750')
+        self.root.geometry('1300x800')
 
         # Set and place gui title
         gui_title = tk.Label(self.root, text="Resistivity Measurement Test Setup", font='Helvetica 18 bold')
@@ -65,10 +65,17 @@ class Visualization:
         self.edited_data_temperature = []
         self.edited_data_humidity = []
 
-        self.second_plot_active = False
-        self.second_plot_data = []
+        self.data_filtered = []
 
-        self.fig = plt.Figure(figsize=(10, 7), frameon=False, tight_layout=True)
+        self.pol_time_list_raw = []
+        self.pol_data_list_raw = []
+        self.depol_time_list_raw = []
+        self.depol_data_list_raw = []
+
+        self.pol_data_list_filtered = []
+        self.depol_data_list_filtered = []
+
+        self.fig = plt.Figure(figsize=(10.5, 7.5), frameon=False, tight_layout=True)
         self.ax = self.fig.add_subplot(111)
 
         self.ax.grid()
@@ -83,62 +90,81 @@ class Visualization:
         self.canvas.draw()
 
         # Basic Settings
-        tk.Label(self.root, text="Basic Settings", font="Helvetica 12 bold").place(x=1020, y=10)
-        tk.Label(self.root, text="File: ").place(x=1020, y=40)
-        tk.Button(self.root, text="Select", command=self.select_file).place(x=1080, y=40)
-        tk.Label(self.root, text="Sensor: ").place(x=1020, y=80)
+        tk.Label(self.root, text="Basic Settings", font="Helvetica 12 bold").place(x=1070, y=10)
+        tk.Label(self.root, text="File: ").place(x=1070, y=40)
+        tk.Button(self.root, text="Select", command=self.select_file).place(x=1140, y=40)
+        tk.Label(self.root, text="Sensor: ").place(x=1070, y=80)
         sensor_choices = ['Voltage', 'Current', 'Temperature', 'Humidity']
         self.sensor_dropdown = ttk.Combobox(self.root, values=sensor_choices, width=10)
         self.sensor_dropdown.current(1)
         self.active_plot = self.sensor_dropdown.current()
-        self.sensor_dropdown.place(x=1080, y=80)
+        self.sensor_dropdown.place(x=1140, y=80)
         self.sensor_dropdown.bind("<<ComboboxSelected>>", self.update_active_plot_var)
 
         # Filter options
-        tk.Label(self.root, text="Filter", font="Helvetica 12 bold").place(x=1020, y=130)
-        tk.Label(self.root, text="Type: ").place(x=1020, y=160)
+        tk.Label(self.root, text="Filter", font="Helvetica 12 bold").place(x=1070, y=130)
+        self.filter_checkbox_var = tk.IntVar()
+        filter_checkbox = tk.Checkbutton(self.root, variable=self.filter_checkbox_var, onvalue=1, offvalue=0, command=self.filter_state)
+        filter_checkbox.place(x=1140, y=130)
+        tk.Label(self.root, text="Type: ").place(x=1070, y=160)
         filter_choices = ['Moving average', 'Moving median']
         self.filter_dropdown = ttk.Combobox(self.root, values=filter_choices, width=14)
         self.filter_dropdown.current(0)
-        self.filter_dropdown.place(x=1080, y=160)
-        tk.Label(self.root, text="Range: ").place(x=1020, y=200)
+        self.filter_dropdown.place(x=1140, y=160)
+        tk.Label(self.root, text="Range: ").place(x=1070, y=200)
         self.filter_entry = tk.Entry(self.root, width=5)
-        self.filter_entry.place(x=1080, y=200)
-        tk.Button(self.root, text="Apply filter", command=self.apply_filter).place(x=1020, y=240)
-        tk.Button(self.root, text="Delete overflows", command=self.delete_overflows).place(x=1110, y=240)
+        self.filter_entry.place(x=1140, y=200)
+        tk.Button(self.root, text="Apply filter", command=self.apply_filter).place(x=1070, y=240)
+        tk.Button(self.root, text="Delete overflows", command=self.delete_overflows).place(x=1160, y=240)
 
         # calculations
-        tk.Label(self.root, text="Calculations", font="Helvetica 12 bold").place(x=1020, y=290)
+        tk.Label(self.root, text="Calculations", font="Helvetica 12 bold").place(x=1070, y=290)
 
         # input start time and steps for averaging
-        tk.Label(self.root, text="Start time pol").place(x=1020, y=320)
-        tk.Label(self.root, text="End time pol").place(x=1020, y=346)
-        tk.Label(self.root, text="Start time depol").place(x=1020, y=372)
-        tk.Label(self.root, text="End time depol").place(x=1020, y=398)
+        tk.Label(self.root, text="Start time pol").place(x=1070, y=320)
+        tk.Label(self.root, text="End time pol").place(x=1070, y=346)
+        tk.Label(self.root, text="Start time depol").place(x=1070, y=372)
+        tk.Label(self.root, text="End time depol").place(x=1070, y=398)
 
         self.start_time_pol = tk.Entry(self.root, width=5)
         self.end_time_pol = tk.Entry(self.root, width=5)
         self.start_time_depol = tk.Entry(self.root, width=5)
         self.end_time_depol = tk.Entry(self.root, width=5)
 
-        self.start_time_pol.place(x=1180, y=320)
-        self.end_time_pol.place(x=1180, y=345)
-        self.start_time_depol.place(x=1180, y=370)
-        self.end_time_depol.place(x=1180, y=395)
+        self.start_time_pol.place(x=1210, y=320)
+        self.end_time_pol.place(x=1210, y=345)
+        self.start_time_depol.place(x=1210, y=370)
+        self.end_time_depol.place(x=1210, y=395)
 
         # output as value: p/d/pdc
-        tk.Label(self.root, text="i_pol: ").place(x=1020, y=430)
-        tk.Label(self.root, text="i_depol: ").place(x=1020, y=450)
-        tk.Label(self.root, text="i_pdc: ").place(x=1020, y=470)
+        tk.Label(self.root, text="i_pol: ").place(x=1070, y=430)
+        tk.Label(self.root, text="i_depol: ").place(x=1070, y=450)
+        tk.Label(self.root, text="i_pdc: ").place(x=1070, y=470)
         self.var_i_pol = tk.Label(self.root, text="n/a")
         self.var_i_depol = tk.Label(self.root, text="n/a")
         self.var_i_pdc = tk.Label(self.root, text="n/a")
-        self.var_i_pol.place(x=1100, y=430)
-        self.var_i_depol.place(x=1100, y=450)
-        self.var_i_pdc.place(x=1100, y=470)
+        self.var_i_pol.place(x=1140, y=430)
+        self.var_i_depol.place(x=1140, y=450)
+        self.var_i_pdc.place(x=1140, y=470)
 
         # recalculate button
-        tk.Button(self.root, text="Recalculate", command=self.recalculate).place(x=1020, y=500)
+        tk.Button(self.root, text="Recalculate", command=self.recalculate).place(x=1070, y=500)
+
+        # PDC shift
+        tk.Label(self.root, text="PDC Shift", font="Helvetica 12 bold").place(x=1070, y=550)
+        self.pdc_checkbox_var = tk.IntVar()
+        pdc_checkbox = tk.Checkbutton(self.root, variable=self.pdc_checkbox_var, onvalue=1, offvalue=0, command=self.pdc_state)
+        pdc_checkbox.place(x=1140, y=550)
+        tk.Label(self.root, text="t_init: ").place(x=1070, y=610)
+        tk.Label(self.root, text="t_pol: ").place(x=1070, y=630)
+
+        self.shift_t1 = tk.Entry(self.root, width=5)
+        self.shift_t2 = tk.Entry(self.root, width=5)
+
+        self.shift_t1.place(x=1140, y=610)
+        self.shift_t2.place(x=1140, y=630)
+
+        tk.Button(self.root, text="Update", command=self.update_pdc_shift).place(x=1070, y=660)
 
         # run evaluation gui
         self.root.mainloop()
@@ -168,8 +194,8 @@ class Visualization:
             step += 1
 
         # get sublists from current data based on above time indexes and calculate averages
-        if self.second_plot_active:
-            data = self.second_plot_data
+        if self.filter_checkbox_var.get() == 1:
+            data = self.data_filtered
         else:
             data = self.edited_data_current
 
@@ -184,54 +210,89 @@ class Visualization:
         self.var_i_depol.configure(text=i_depol)
         self.var_i_pdc.configure(text=i_pdc)
 
-    def apply_filter(self):
-        if not self.active_plot == 1:
-            tk.messagebox.showerror("Error", "Function is only available for current plot")
-            return
-
-        steps = int(self.filter_entry.get())
-        data = self.edited_data_current
-
-        # Moving average
-        if self.filter_dropdown.current() == 0:
-            # init set of data points until avg can be calculated based on steps size
-            average = data[0:steps]
-            data_for_calculation = data[0:steps]
-            for i in range(steps, len(data)):
-                # calculate average from data list
-                average.append(round(statistics.mean(data_for_calculation), 2))
-                # delete first datapoint from list
-                data_for_calculation = data_for_calculation[1:steps]
-                # append next datapoint
-                data_for_calculation.append(data[i])
-
-            self.second_plot_data = average
-
-        # Moving median
-        elif self.filter_dropdown.current() == 1:
-            # init set of data points until median can be calculated based on steps size
-            median = data[0:steps]
-            data_for_calculation = data[0:steps]
-            for i in range(steps, len(data)):
-                # calculate average from data list
-                median.append(round(statistics.median(data_for_calculation), 2))
-                # delete first datapoint from list
-                data_for_calculation = data_for_calculation[1:steps]
-                # append next datapoint
-                data_for_calculation.append(data[i])
-
-            self.second_plot_data = median
-
+    def filter_state(self):
+        if self.filter_checkbox_var.get() == 1:
+            self.apply_filter()
+        elif self.filter_checkbox_var.get() == 0:
+            self.update_plot()
         else:
             raise ValueError
 
-        self.second_plot_active = True
+    def pdc_state(self):
+        if self.pdc_checkbox_var.get() == 1:
+            self.update_pdc_shift()
+        elif self.pdc_checkbox_var.get() == 0:
+            self.filter_state()
+        else:
+            raise ValueError
+
+    @staticmethod
+    def median_list(data, steps):
+        median = data[0:steps]
+        data_for_calculation = data[0:steps]
+        for i in range(steps, len(data)):
+            # calculate average from data list
+            median.append(round(statistics.median(data_for_calculation), 2))
+            # delete first datapoint from list
+            data_for_calculation = data_for_calculation[1:steps]
+            # append next datapoint
+            data_for_calculation.append(data[i])
+
+        return median
+
+    @staticmethod
+    def average_list(data, steps):
+        average = data[0:steps]
+        data_for_calculation = data[0:steps]
+        for i in range(steps, len(data)):
+            # calculate average from data list
+            average.append(round(statistics.mean(data_for_calculation), 2))
+            # delete first datapoint from list
+            data_for_calculation = data_for_calculation[1:steps]
+            # append next datapoint
+            data_for_calculation.append(data[i])
+
+        return average
+
+    def apply_filter(self):
+        if not self.active_plot == 1:
+            tk.messagebox.showerror("Error", "Function is only available for current plot")
+            self.filter_checkbox_var.set(0)
+            return
+
+        try:
+            steps = int(self.filter_entry.get())
+        except ValueError:
+            tk.messagebox.showerror('Error', 'Please specify a valid filter range!')
+            self.filter_checkbox_var.set(0)
+            return
+
+        if self.pdc_checkbox_var.get() == 0:
+            # without pdc shift
+            if self.filter_dropdown.current() == 0:
+                # average filter
+                self.data_filtered = self.average_list(self.edited_data_current, steps)
+            elif self.filter_dropdown.current() == 1:
+                # median filter
+                self.data_filtered = self.median_list(self.edited_data_current, steps)
+        elif self.pdc_checkbox_var.get() == 1:
+            # with pdc shift
+            if self.filter_dropdown.current() == 0:
+                # average filter
+                self.pol_data_list_filtered = self.average_list(self.pol_data_list_raw, steps)
+                self.depol_data_list_filtered = self.average_list(self.depol_data_list_raw, steps)
+            if self.filter_dropdown.current() == 1:
+                # median filter
+                self.pol_data_list_filtered = self.median_list(self.pol_data_list_raw, steps)
+                self.depol_data_list_filtered = self.median_list(self.depol_data_list_raw, steps)
+        else:
+            raise ValueError
+
+        self.filter_checkbox_var.set(1)
         self.update_plot()
 
     def select_file(self):
         # reset class vars
-        self.second_plot_active = False
-        self.second_plot_data = []
 
         # get data
         self.filename = filedialog.askopenfilename(initialdir="C:/Users/eliasl/Documents/logfiles/")
@@ -250,11 +311,7 @@ class Visualization:
         self.update_plot()
 
     def get_data(self, data_type):
-        """
 
-        :param type:
-        :return:
-        """
         if self.filename is None:
             tk.messagebox.showerror("No file selected")
             return
@@ -282,13 +339,6 @@ class Visualization:
             raise ValueError
 
     def read_csv(self, start_row, column):
-        """
-
-        :param file:
-        :param start_row: default is 11
-        :param column: 0-6 date,time,absolute_time,voltage,current,temperature,humidity,measurement_range_id
-        :return:
-        """
 
         data = []
 
@@ -317,33 +367,110 @@ class Visualization:
                 del(self.edited_data_current[index_mirrored])
                 del(self.edited_data_absolute_time[index_mirrored])
 
+        if self.pdc_checkbox_var.get() == 1:
+            self.update_pdc_shift()
+        else:
+            self.update_plot()
+
+    def update_pdc_shift(self):
+
+        # function only for current available
+        if not self.active_plot == 1:
+            tk.messagebox.showerror("Error", "Function is only available for current plot")
+            self.pdc_checkbox_var.set(0)
+            return
+
+        # change dropdown state if not enabled (case if coming directly from update button)
+        self.pdc_checkbox_var.set(1)
+
+        # get entries
+        try:
+            shift_t1 = float(self.shift_t1.get())
+            shift_t2 = float(self.shift_t2.get())
+        except ValueError:
+            tk.messagebox.showerror("Error", "Please specify valid times for pdc shift")
+            self.pdc_checkbox_var.set(0)
+            return
+
+        # get indexes in time list where above times are reached
+        indexes = [0, 0]
+        times = [shift_t1, shift_t2]
+        step = 0
+        for i in range(0, 2):
+            while times[step] > self.edited_data_absolute_time[indexes[step]]:
+                indexes[step] += 1
+            step += 1
+
+        self.pol_time_list_raw = self.edited_data_absolute_time[indexes[0]:indexes[1]-1]
+        self.pol_data_list_raw = self.edited_data_current[indexes[0]:indexes[1]-1]
+
+        self.depol_time_list_raw = self.edited_data_absolute_time[indexes[1]-1:len(self.edited_data_absolute_time)-1]
+        self.depol_data_list_raw = self.edited_data_current[indexes[1]-1:len(self.edited_data_current)-1]
+
+        # shift pol list by t1 (init time, normally 60 seconds)
+        self.pol_time_list_raw = [round(element - shift_t1, 2) for element in self.pol_time_list_raw]
+
+        # shift depol time list
+        self.depol_time_list_raw = [round(element - shift_t2, 2) for element in self.depol_time_list_raw]
+
+        # update filter (if active)
+        if self.filter_checkbox_var.get() == 1:
+            self.apply_filter()
+
+        # update plot
         self.update_plot()
 
     def update_plot(self):
         self.ax.cla()
         if self.active_plot == 0:
-            data_y = self.edited_data_voltage
+            data_raw = self.edited_data_voltage
             self.ax.set_ylabel("Voltage in V")
             self.ax.set_title("Voltage Measurement")
         elif self.active_plot == 1:
-            data_y = self.edited_data_current
+            data_raw = self.edited_data_current
             self.ax.set_ylabel("Current in pA")
             self.ax.set_title("Current Measurement")
         elif self.active_plot == 2:
-            data_y = self.edited_data_temperature
+            data_raw = self.edited_data_temperature
             self.ax.set_ylabel("Temperature in °C")
             self.ax.set_title("Temperature Measurement")
         elif self.active_plot == 3:
-            data_y = self.edited_data_humidity
+            data_raw = self.edited_data_humidity
             self.ax.set_ylabel("Relative humidity in %")
             self.ax.set_title("Relative Humidity Measurement")
         else:
             print(self.active_plot)
             raise ValueError
 
-        self.ax.plot(self.edited_data_absolute_time, data_y)
-        if self.second_plot_active:
-            self.ax.plot(self.edited_data_absolute_time, self.second_plot_data)
+        # define colors:
+        color_raw_no_pdc = 'tab:blue'
+        color_filter_no_pdc = 'tab:orange'
+        color_raw_pdc_pol = 'lightsteelblue'
+        color_raw_pdc_depol = 'navajowhite'
+        color_filter_pdc_pol = 'navy'
+        color_filter_pdc_depol = 'darkorange'
+
+
+        # first plot (rohdaten oder pdc)
+        if self.pdc_checkbox_var.get() == 0:
+            self.ax.plot(self.edited_data_absolute_time, data_raw, color=color_raw_no_pdc)
+        elif self.pdc_checkbox_var.get() == 1:
+            self.ax.plot(self.pol_time_list_raw, self.pol_data_list_raw, color=color_raw_pdc_pol)
+            self.ax.plot(self.depol_time_list_raw, self.depol_data_list_raw, color=color_raw_pdc_depol)
+        else:
+            raise ValueError
+
+        # second plot (filter active)
+        print(self.pdc_checkbox_var.get())
+        if self.filter_checkbox_var.get() == 1:
+            if self.pdc_checkbox_var.get() == 0:
+                self.ax.plot(self.edited_data_absolute_time, self.data_filtered, color=color_filter_no_pdc)
+            elif self.pdc_checkbox_var.get() == 1:
+                self.ax.plot(self.pol_time_list_raw, self.pol_data_list_filtered, color=color_filter_pdc_pol)
+                self.ax.plot(self.depol_time_list_raw, self.depol_data_list_filtered, color=color_filter_pdc_depol)
+            else:
+                raise ValueError
+
         self.ax.grid()
         self.ax.set_xlabel("Time in s")
         self.canvas.draw()
