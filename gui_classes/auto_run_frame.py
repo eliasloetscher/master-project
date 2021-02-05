@@ -296,6 +296,7 @@ class AutoRunFrame:
                     print("PDC - STARTED STEP 4")
                     # stop logging
                     self.stop_record()
+                    self.stop_auto_range()
                     log.finish_logging()
                     self.stop_plot()
                     tk.messagebox.showinfo("Finish", "Measurement was finished succesfully!", parent=self.autorun_main_window)
@@ -363,6 +364,7 @@ class AutoRunFrame:
                     self.stop_record()
                     log.finish_logging()
                     self.stop_plot()
+                    self.root.after_cancel(self.after_id_auto_range)
                     tk.messagebox.showinfo("Finish", "Measurement was finished succesfully!", parent=self.autorun_main_window)
 
                 else:
@@ -402,6 +404,11 @@ class AutoRunFrame:
             self.root.after_cancel(self.after_id_record)
         self.after_id_record = None
 
+    def stop_auto_range(self):
+        if self.after_id_auto_range is not None:
+            self.root.after_cancel(self.after_id_auto_range)
+        self.after_id_auto_range = None
+
     def stop_measurement(self):
         if tk.messagebox.askokcancel("Abort measurment", "Are you sure to abort the measurement?", parent=self.autorun_main_window):
             if self.after_id_record is not None:
@@ -411,6 +418,10 @@ class AutoRunFrame:
             if self.after_id_plot is not None:
                 self.root.after_cancel(self.after_id_plot)
                 self.after_id_plot = None
+
+            if self.after_id_auto_range is not None:
+                self.root.after_cancel(self.after_id_auto_range)
+                self.after_id_auto_range = None
 
             tk.messagebox.showinfo("Information", "Measurement aborted", parent=self.autorun_main_window)
 
@@ -480,13 +491,13 @@ class AutoRunFrame:
         if self.t_start is not None:
             time_since_start = time.time() - int(self.t_start)
             # switch to 20 nA range shortly before time step one
-            if 2 > int(self.t_one_result) - time_since_start > 0 and self.t_one_result is not None:
+            if 1 > int(self.t_one_result) - time_since_start > 0 and self.t_one_result is not None:
                 print("TIME CONDITION FULLWILD one")
                 self.electrometer.set_range(5)
                 self.switch_lower_flag = False
 
             # switch to 20 nA range shortly before time step two
-            elif 2 > int(self.t_one_result) + int(self.t_two_result) - time_since_start > 0 and self.t_two_result is not None:
+            elif 1 > int(self.t_one_result) + int(self.t_two_result) - time_since_start > 0 and self.t_two_result is not None:
                 print("TIME CONDITION FULLWILD two")
                 self.electrometer.set_range(5)
 

@@ -69,7 +69,7 @@ def gui():
     safety.start_safety_circuit(root, labjack, relays, electrometer, hvamp)
 
     # Start breakdown detection
-    bd.breakdown_detection(root, labjack, relays, electrometer, hvamp, False)
+    #bd.breakdown_detection(root, labjack, relays, electrometer, hvamp, False)
 
     # Set gui name
     root.title("MVISS")
