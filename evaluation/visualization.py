@@ -22,6 +22,9 @@ from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
 import utilities.measure_module as measure
 import utilities.log_module as log
 from tkinter import filedialog
+from sklearn.linear_model import LinearRegression
+import numpy as np
+import scipy.optimize
 
 
 # read file
@@ -74,6 +77,14 @@ class Visualization:
 
         self.pol_data_list_filtered = []
         self.depol_data_list_filtered = []
+
+        self.time_list_pol = []
+        self.time_list_depol = []
+        self.pol_fit = []
+        self.depol_fit = []
+
+        self.pdc_difference = []
+        self.pdc_difference_time = []
 
         self.fig = plt.Figure(figsize=(10.5, 7.5), frameon=False, tight_layout=True)
         self.ax = self.fig.add_subplot(111)
@@ -165,6 +176,7 @@ class Visualization:
         self.shift_t2.place(x=1140, y=630)
 
         tk.Button(self.root, text="Update", command=self.update_pdc_shift).place(x=1070, y=660)
+        tk.Button(self.root, text="Export", command=self.export).place(x=1140, y=660)
 
         # run evaluation gui
         self.root.mainloop()
@@ -291,8 +303,92 @@ class Visualization:
         self.filter_checkbox_var.set(1)
         self.update_plot()
 
+    def export(self):
+        with open('6.csv', 'w', newline='') as csvfile:
+            spamwriter = csv.writer(csvfile, delimiter=' ', escapechar=' ', quoting=csv.QUOTE_NONE)
+            spamwriter.writerow(['pdc_pol_time,pdc_pol_raw,pdc_depol_time,pdc_depol_raw,pdc_fit_pol_time,pdc_fit_pol_data,pdc_fit_depol_time,pdc_fit_depol_data,pdc_diff_time,pdc_diff_data'])
+
+            for i in range(2000):
+                msg = ""
+                if len(self.pol_time_list_raw) > i:
+                    msg += str(self.pol_time_list_raw[i])+","
+                else:
+                    msg += ","
+                if len(self.pol_data_list_raw) > i:
+                    msg += str(self.pol_data_list_raw[i])+","
+                else:
+                    msg += ","
+                if len(self.depol_time_list_raw) > i:
+                    msg += str(self.depol_time_list_raw[i])+","
+                else:
+                    msg += ","
+                if len(self.depol_data_list_raw) > i:
+                    msg += str(self.depol_data_list_raw[i])+","
+                else:
+                    msg += ","
+                if len(self.time_list_pol) > i:
+                    msg += str(self.time_list_pol[i])+","
+                else:
+                    msg += ","
+                if len(self.pol_fit) > i:
+                    msg += str(self.pol_fit[i])+","
+                else:
+                    msg += ","
+                if len(self.time_list_depol) > i:
+                    msg += str(self.time_list_depol[i])+","
+                else:
+                    msg += ","
+                if len(self.depol_fit) > i:
+                    msg += str(self.depol_fit[i])+","
+                else:
+                    msg += ","
+                if len(self.pdc_difference_time) > i:
+                    msg += str(self.pdc_difference_time[i])+","
+                else:
+                    msg += ","
+                if len(self.pdc_difference) > i:
+                    msg += str(self.pdc_difference[i])
+
+                spamwriter.writerow([msg])
+
+
     def select_file(self):
         # reset class vars
+        self.active_plot = self.sensor_dropdown.current()
+        # Initialize data lists filled later with 'original' data from csvfile, won't be changed until filename update
+        self.raw_data_absolute_time = []
+        self.raw_data_voltage = []
+        self.raw_data_current = []
+        self.raw_data_temperature = []
+        self.raw_data_humidity = []
+
+        # Initialize data lists filled later with processed data (e.g. moving average, cancelling of overflows, etc)
+        self.edited_data_absolute_time = []
+        self.edited_data_voltage = []
+        self.edited_data_current = []
+        self.edited_data_temperature = []
+        self.edited_data_humidity = []
+
+        self.data_filtered = []
+
+        self.pol_time_list_raw = []
+        self.pol_data_list_raw = []
+        self.depol_time_list_raw = []
+        self.depol_data_list_raw = []
+
+        self.pol_data_list_filtered = []
+        self.depol_data_list_filtered = []
+
+        self.time_list_pol = []
+        self.time_list_depol = []
+        self.pol_fit = []
+        self.depol_fit = []
+
+        self.pdc_difference = []
+        self.pdc_difference_time = []
+
+        self.filter_checkbox_var.set(0)
+        self.pdc_checkbox_var.set(0)
 
         # get data
         self.filename = filedialog.askopenfilename(initialdir="C:/Users/eliasl/Documents/logfiles/")
@@ -372,6 +468,41 @@ class Visualization:
         else:
             self.update_plot()
 
+    @staticmethod
+    def fit_data_to_time_list(x_data, y_data):
+
+        interval = 60
+        absolute_max_time = int(x_data[len(x_data) - 1])
+
+        result = []
+        time_list = []
+        for t in range(int(interval / 2), absolute_max_time - int(interval / 2), 2):
+            time_list.append(t)
+
+        x_pos_min = 0
+        x_pos_max = 0
+        for time_now in time_list:
+            t_min = time_now - interval / 2
+            t_max = time_now + interval / 2
+
+            # find x_point index for t_min
+            while t_min > x_data[x_pos_min]:
+                x_pos_min += 1
+
+            # find x_point index for t_max
+            while t_max > x_data[x_pos_max]:
+                x_pos_max += 1
+
+            # get data sublist based on interval
+            data_sublist = []
+            for position in range(x_pos_min, x_pos_max + 1):
+                data_sublist.append(y_data[position])
+
+            # get mean value of data sublist and append to result list
+            result.append(round(statistics.median(data_sublist), 2))
+
+        return [time_list, result]
+
     def update_pdc_shift(self):
 
         # function only for current available
@@ -417,6 +548,20 @@ class Visualization:
         if self.filter_checkbox_var.get() == 1:
             self.apply_filter()
 
+        self.time_list_pol, self.pol_fit = self.fit_data_to_time_list(self.pol_time_list_raw, self.pol_data_list_raw)
+        self.time_list_depol, self.depol_fit = self.fit_data_to_time_list(self.depol_time_list_raw, self.depol_data_list_raw)
+
+        self.pdc_difference = []
+        if len(self.pol_fit) > len(self.depol_fit):
+            length = len(self.depol_fit)
+            self.pdc_difference_time = self.time_list_depol
+        else:
+            length = len(self.pol_fit)
+            self.pdc_difference_time = self.time_list_pol
+
+        for i in range(length):
+            self.pdc_difference.append(round(self.pol_fit[i] + self.depol_fit[i], 2))
+
         # update plot
         self.update_plot()
 
@@ -457,11 +602,14 @@ class Visualization:
         elif self.pdc_checkbox_var.get() == 1:
             self.ax.plot(self.pol_time_list_raw, self.pol_data_list_raw, color=color_raw_pdc_pol)
             self.ax.plot(self.depol_time_list_raw, self.depol_data_list_raw, color=color_raw_pdc_depol)
+            self.ax.plot(self.pdc_difference_time, self.pdc_difference, color="red")
+            self.ax.plot(self.time_list_pol, self.pol_fit, color="black")
+            self.ax.plot(self.time_list_depol, self.depol_fit, color="black")
+
         else:
             raise ValueError
 
         # second plot (filter active)
-        print(self.pdc_checkbox_var.get())
         if self.filter_checkbox_var.get() == 1:
             if self.pdc_checkbox_var.get() == 0:
                 self.ax.plot(self.edited_data_absolute_time, self.data_filtered, color=color_filter_no_pdc)
@@ -470,6 +618,29 @@ class Visualization:
                 self.ax.plot(self.depol_time_list_raw, self.depol_data_list_filtered, color=color_filter_pdc_depol)
             else:
                 raise ValueError
+
+        # print
+        print("pdc_pol_time", self.pol_time_list_raw)
+        print("\n")
+        print("pdc_pol_raw", self.pol_data_list_raw)
+        print("\n")
+        print("pdc_depol_time", self.depol_time_list_raw)
+        print("\n")
+        print("pdc_depol_raw", self.depol_data_list_raw)
+        print("\n")
+
+        print("pdc_fit_pol_time", self.time_list_pol)
+        print("\n")
+        print("pdc_fit_pol_data", self.pol_fit)
+        print("\n")
+        print("pdc_fit_depol_time", self.time_list_depol)
+        print("\n")
+        print("pdc_fit_depol_data", self.depol_fit)
+        print("\n")
+        print("pdc_diff_time", self.pdc_difference_time)
+        print("\n")
+        print("pdc_diff_data", self.pdc_difference)
+        print("###########################################")
 
         self.ax.grid()
         self.ax.set_xlabel("Time in s")

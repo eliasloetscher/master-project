@@ -22,6 +22,9 @@ class SensorHtm2500lf:
         # Convert from V to RH in % with linear equation according to datasheet
         convert = 0.0375*result*1000 - 37.7
 
+        if convert < 0:
+            convert = 0
+
         return convert
 
     def read_temperature(self):

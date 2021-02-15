@@ -157,29 +157,37 @@ def create_lookup_plot():
     delta_electrode = [3.08, 7.24, 13.28, 15.75, 20.80]
 
     # calculate coefficients for interpolation
-    delta_surface_fit = numpy.polyfit(temp_points, delta_surface, 2)
-    delta_air_fit = numpy.polyfit(temp_points, delta_air, 2)
-    delta_electrode_fit = numpy.polyfit(temp_points, delta_electrode, 2)
+    delta_surface_fit = numpy.polyfit(temp_points, delta_surface, 1)
+    delta_air_fit = numpy.polyfit(temp_points, delta_air, 1)
+    delta_electrode_fit = numpy.polyfit(temp_points, delta_electrode, 1)
 
     # define functions
     x = numpy.linspace(30, 130, 130)
-    func_surface = delta_surface_fit[0] * pow(x, 2) + delta_surface_fit[1] * x + delta_surface_fit[2]
-    func_air = delta_air_fit[0] * pow(x, 2) + delta_air_fit[1] * x + delta_air_fit[2]
-    func_electrode = delta_electrode_fit[0] * pow(x, 2) + delta_electrode_fit[1] * x + delta_electrode_fit[2]
+    # func_surface = delta_surface_fit[0] * pow(x, 2) + delta_surface_fit[1] * x + delta_surface_fit[2]
+    # func_air = delta_air_fit[0] * pow(x, 2) + delta_air_fit[1] * x + delta_air_fit[2]
+    # func_electrode = delta_electrode_fit[0] * pow(x, 2) + delta_electrode_fit[1] * x + delta_electrode_fit[2]
+    func_surface = delta_surface_fit[0]*x + delta_surface_fit[1]
+    func_air = delta_air_fit[0] * x + delta_air_fit[1]
+    func_electrode = delta_electrode_fit[0] * x + delta_electrode_fit[1]
 
+    plt.rcParams["font.family"] = "Times New Roman"
     plt.title("Control temperature deviation")
-    plt.plot(x, func_surface, "r", label="Surface")
-    plt.plot(x, func_air, "b", label="Air")
-    plt.plot(x, func_electrode, "g", label="Electrode")
+    plt.plot(x, func_surface, "r")
+    plt.plot(x, func_air, "b")
+    plt.plot(x, func_electrode, "g")
+    plt.scatter(temp_points, delta_surface, c='None', edgecolors="red", marker='o', label="Surface")
+    plt.scatter(temp_points, delta_air, c='None', edgecolors="blue", marker='^', label="Air")
+    plt.scatter(temp_points, delta_electrode, c='None', edgecolors="green", marker='d', label="Electrode")
     plt.xlabel("Control temperature in °C")
-    plt.ylabel("Temperature delta in °C")
+    plt.ylabel("Temperature drop in °C")
     plt.legend(loc="lower right")
     plt.grid()
+    plt.savefig("temperature_lookup.png", dpi=300)
     plt.show()
 
 
 # Uncomment the desired action to be executed:
 
-# create_lookup_plot()
-# steady_state_evaluation()
-# control_temp_delta_evaluation()
+create_lookup_plot()
+steady_state_evaluation()
+control_temp_delta_evaluation()

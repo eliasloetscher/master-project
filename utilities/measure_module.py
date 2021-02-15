@@ -3,6 +3,7 @@ from parameters import Parameters
 
 def measure_all_values(electrometer, hvamp, humidity_sensor, labjack):
     """
+    source: active source, needed for correction function. can be 'e' (electrometer) or 'h' (hvamp).
 
     :return: All sensor values
     """
@@ -12,7 +13,10 @@ def measure_all_values(electrometer, hvamp, humidity_sensor, labjack):
     electrometer_temperature = round(measure_temperature(electrometer), 2)
     humidity = round(measure_humidity(humidity_sensor), 2)
 
-    values = [hv_amp_voltage, electrometer_current, electrometer_temperature, humidity]
+    # hum ref
+    temperature = humidity_sensor.read_temperature()
+
+    values = [hv_amp_voltage, electrometer_current, temperature, humidity]
 
     if Parameters.DEBUG:
         print("measured values: ", values)
@@ -28,16 +32,28 @@ def measure_voltage(labjack):
     # map (0-5V to 0-5000V)
     voltage = 1000 * analog_read
 
-    # correct with function
-    if voltage > 3:
-        coefficients = [1.63206300e-06, 1.14120940e-02, 5.85082426e-01]
-        correction = coefficients[0]*pow(voltage, 2) + coefficients[1]*voltage + coefficients[2]
-
-    elif voltage < 3:
-        coefficients = [1.95647789e-06, -9.47588563e-03, -2.37081434e+00]
-        correction = -(coefficients[0]*pow(voltage, 2) + coefficients[1]*voltage + coefficients[2])
+    if Parameters.active_source == 'h':
+        # correct with function
+        if voltage > 3:
+            coefficients = [1.63206300e-06, 1.14120940e-02, 5.85082426e-01]
+            correction = coefficients[0]*pow(voltage, 2) + coefficients[1]*voltage + coefficients[2]
+        elif voltage < 3:
+            coefficients = [1.95647789e-06, -9.47588563e-03, -2.37081434e+00]
+            correction = -(coefficients[0]*pow(voltage, 2) + coefficients[1]*voltage + coefficients[2])
+        else:
+            correction = 1.66
+    elif Parameters.active_source == 'e':
+        if voltage > 3:
+            coefficients = [-3.78787879e-07,  2.45724242e-02,  1.68181818e+00]
+            correction = coefficients[0] * pow(voltage, 2) + coefficients[1] * voltage + coefficients[2]
+        elif voltage < 3:
+            coefficients = [-1.11072261e-06, -2.54261772e-02, -1.71979021e+00]
+            correction = -(coefficients[0] * pow(voltage, 2) + coefficients[1] * voltage + coefficients[2])
+        else:
+            correction = 1.59
     else:
-        correction = 1.66
+        print("ERROR: Active source value is wrong!")
+        raise ValueError
 
     real_voltage = voltage + correction
 

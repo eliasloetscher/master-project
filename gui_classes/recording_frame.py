@@ -4,7 +4,7 @@ import utilities.log_module as log
 import utilities.measure_module as measure
 from parameters import Parameters
 from gui_classes.auto_run_frame import AutoRunFrame
-
+import numpy
 
 class RecordingFrame:
     """ This class implements the gui widget for the recording section.
@@ -120,8 +120,8 @@ class RecordingFrame:
 
                 # Create log file with data information (DO NOT CHANGE)
                 log.create_logfile(self.filename.get())
-                log.log_message("Params: date, time, absolute_time, voltage, current, temperature, humidity, measurement_range_id, measurement_speed")
-                log.log_message("Units: -,-,s,V,pA,°C,RHin%,-,-")
+                log.log_message("Params: date, time, absolute_time, voltage, current, temperature, humidity, measurement_range_id, measurement_speed, t_ref, rh_ref")
+                log.log_message("Units: -,-,s,V,pA,°C,RHin%,-,-,RHin%,°C")
 
                 # Start to record
                 self.record()
@@ -140,6 +140,29 @@ class RecordingFrame:
 
         # append measurement speed
         values.append(self.electrometer.speed)
+
+        ############################
+        # hum ref values
+        # Read analog IN at humidity sensor port
+        result = self.labjack.read_analog("AIN13")
+
+        # Convert from V to RH in % with linear equation according to datasheet
+        convert = round(0.0375*result*1000 - 37.7,2)
+        if convert < 0:
+            convert = 0
+
+        values.append(convert)
+
+        # Read analog IN at temp sensor port
+        result = self.labjack.read_analog("AIN12") * 1000
+
+        # Convert from mV to degree celsios with steinhart equations according to datasheet
+        resistance = (10000 * result) / (5000 - result)
+        test_cell_temp_in_k = 1 / (8.54942 * pow(10, -4) + 2.57305 * pow(10, -4) * numpy.log(resistance) + 1.65368 * pow(10, -7) * pow(numpy.log(resistance), 3))
+        test_cell_temp_in_deg_c = round(test_cell_temp_in_k - 273.15, 2)
+
+        values.append(test_cell_temp_in_deg_c)
+        #########################
 
         # Log all values
         log.log_values(values)

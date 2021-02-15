@@ -79,3 +79,6 @@ class Parameters:
     # Labjack tick dac analog out channels for hvamp
     LJ_ANALOG_OUT_HVA_REF = "A"
     LJ_ANALOG_OUT_HVA_CTRL = "B"
+
+    # active source
+    active_source = 'h'

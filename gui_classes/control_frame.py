@@ -2,6 +2,7 @@ import tkinter as tk
 import tkinter.messagebox
 from tkinter import ttk
 from devices.electrometer_keysight_b2985a import InterlockError
+from parameters import Parameters
 
 
 class ControlFrame:
@@ -173,8 +174,10 @@ class ControlFrame:
     def set_voltage(self):
         if self.source_dropdown.current() == 0:
             self.hvamp.set_voltage(int(self.voltage.get()))
+            Parameters.active_source = 'h'
         elif self.source_dropdown.current() == 1:
             self.electrometer.enable_source_output()
+            Parameters.active_source = 'e'
             try:
                 self.electrometer.set_voltage(int(self.voltage.get()))
             except InterlockError:
