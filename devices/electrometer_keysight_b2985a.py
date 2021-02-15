@@ -66,6 +66,9 @@ class ElectrometerControl:
         # measurement speed variable
         self.speed = 'normal'
 
+        # store previous voltage
+        self.previous_voltage = 0
+
         # Try to connect
         self.connect()
 
@@ -177,12 +180,21 @@ class ElectrometerControl:
                 return False
 
         # Check input parameter. Maximum output voltage is 1000 V.
-        if voltage < 0 or voltage > 1000:
+        if voltage < -1000 or voltage > 1000:
             raise ValueError
 
-        # Check if interlock circuit is open and a voltage of > 21 V is intended to apply (software safety)
-        if not int(self.get_interlock_state()) and voltage > 21:
-            raise InterlockError
+        if self.previous_voltage < 5 and voltage >= 0:
+            self.disable_source_output()
+            time.sleep(0.1)
+            self.set_voltage_range(1)
+            time.sleep(0.1)
+            self.enable_source_output()
+        elif self.previous_voltage > -5 and voltage < 0:
+            self.disable_source_output()
+            time.sleep(0.1)
+            self.set_voltage_range(-1)
+            time.sleep(0.1)
+            self.enable_source_output()
 
         # Set given voltage
         try:
@@ -193,6 +205,9 @@ class ElectrometerControl:
             self.connection_state = False
             self.close_connection()
             return False
+
+        self.previous_voltage = voltage
+
 
     def get_current(self):
 
@@ -346,6 +361,30 @@ class ElectrometerControl:
         # Try to disable the amperemter (connect input internally to gnd)
         try:
             query = str('INP:STAT OFF')
+            self.session.write(query)
+            self.ampmeter_state = False
+        except visa.Error:
+            self.connection_state = False
+            self.close_connection()
+            return False
+
+    def set_voltage_range(self, range):
+
+        # Check if connection is alive. If not, try to connect.
+        if not self.connection_state:
+            if not self.connect():
+                return False
+
+        if range == -1:
+            write = str('SOUR:VOLT:RANG MIN')
+        elif range == 1:
+            write = str('SOUR:VOLT:RANG MAX')
+        else:
+            raise ValueError
+
+        # Try to set the voltage range
+        try:
+            query = write
             self.session.write(query)
             self.ampmeter_state = False
         except visa.Error:
