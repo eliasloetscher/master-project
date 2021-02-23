@@ -4,14 +4,14 @@ import utilities.log_module as log
 import utilities.measure_module as measure
 from parameters import Parameters
 from gui_classes.auto_run_frame import AutoRunFrame
-import numpy
+
 
 class RecordingFrame:
     """ This class implements the gui widget for the recording section.
 
     Methods
     ---------
-    update_interval()   Updates the measuremnt interval
+    auto_run_init()     Prepare the automatically controlled measurement and logging process
     start_recording()   Preparation method, task is done once at the start
     record()            Recording method, task is done periodically at the given measurement interval
     stop_recording()    Finish method, task is done once at the end if user stops the recording process
@@ -27,7 +27,7 @@ class RecordingFrame:
         :param hum_sensor: object for controlling the humidity sensor
         """
 
-        # Initialize class vars
+        # initialize class vars
         self.root = root
         self.electrometer = electrometer
         self.hvamp = hvamp
@@ -35,30 +35,30 @@ class RecordingFrame:
         self.labjack = labjack
         self.relays = relays
 
-        # Initialize recording vars and set default values
+        # initialize recording vars and set default values
         self.after_id = None
         self.filename = ""
         self.recording_state = False
         self.interval = 1000
 
-        # Initialize and place frame
+        # initialize and place frame
         self.recording_frame = tk.Frame(self.root, width=650, height=150, highlightbackground="black",
                                         highlightthickness=1)
         self.recording_frame.grid(row=4, column=1, padx=(0, 20), pady=(0, 20))
 
-        # Avoid frame shrinking to the size of the included elements
+        # avoid frame shrinking to the size of the included elements
         self.recording_frame.grid_propagate(False)
 
-        # Set and place frame title
+        # set and place frame title
         recording_frame_title = tk.Label(self.recording_frame, text="Recordings", font="Helvetica 14 bold")
         recording_frame_title.grid(padx=5, pady=5, sticky="W")
 
-        # Set and place filename label and entry field
+        # set and place filename label and entry field
         tk.Label(self.recording_frame, text="Choose filename:").grid(row=1, padx=(10, 0), pady=10, sticky="W")
         self.filename = tk.Entry(self.recording_frame, width=30)
         self.filename.grid(row=1, column=1, padx=(10, 0), pady=10, sticky="W", columnspan=4)
 
-        # Set and place 'start' and 'stop' buttons
+        # set and place 'start' and 'stop' buttons
         tk.Label(self.recording_frame, text="Control recordings: ").grid(row=2, padx=(10, 0), pady=10, sticky="W")
         start_button = tk.Button(self.recording_frame, text="Manual start ", command=self.start_recording)
         stop_button = tk.Button(self.recording_frame, text="Manual stop", command=self.stop_recording)
@@ -67,12 +67,16 @@ class RecordingFrame:
         stop_button.grid(row=2, column=2, sticky="W", padx=(10, 0), pady=10)
         auto_runtime_button.grid(row=2, column=3, sticky="W", padx=(10, 0), pady=10)
 
-        # Set and place recording state frame
+        # set and place recording state frame
         self.state_frame = tk.Frame(self.recording_frame, width=50, height=50, highlightbackground="black",
                                     highlightthickness=1, bg="green")
         self.state_frame.place(x=580, y=80)
 
     def auto_run_init(self):
+        """ Prepare the automatically controlled measurement and logging process
+
+        :return: None
+        """
         # check if recording is already in progress
         if self.after_id is not None:
             tk.messagebox.showerror("Error", "Recording is already in progress")
@@ -85,45 +89,46 @@ class RecordingFrame:
         elif self.relays.safety_state == "open":
             tk.messagebox.showerror("Error", "Close safety circuit first")
 
-        # check if ampmeter is switched on
+        # check if ammeter is switched on
         elif not self.electrometer.ampmeter_state:
             tk.messagebox.showerror("Error", "Switch on ampmeter first")
 
         # ready for recording
         else:
+            # start auto run frame
             AutoRunFrame(self.root, self.electrometer, self.hvamp, self.hum_sensor, self.labjack, self.relays,
                          self.filename.get())
 
     def start_recording(self):
-        """ Setting up various tasks for starting to record. If successfull, the method record() is started.
+        """ Setting up various tasks for starting to record. If successful, the method record() is started.
 
         :return: None
         """
 
-        # Check if recording is already in progress
+        # check if recording is already in progress
         if self.after_id is not None:
             tk.messagebox.showerror("Error", "Recording is already in progress")
 
-        # Check if filename is specified
+        # check if filename is specified
         elif self.filename.get() == "":
             tk.messagebox.showerror("Error", "Filename is not specified")
 
-        # Ready for recording
+        # ready for recording
         else:
-            # Ask user for confirmation
+            # ask user for confirmation
             if tk.messagebox.askokcancel("Start", "Start recording?"):
                 if Parameters.DEBUG:
                     print("started to record")
 
-                # Switch color of recording state frame to red
+                # switch color of recording state frame to red
                 self.state_frame.configure(bg="red")
 
-                # Create log file with data information (DO NOT CHANGE)
+                # create log file with data information (DO NOT CHANGE)
                 log.create_logfile(self.filename.get())
-                log.log_message("Params: date, time, absolute_time, voltage, current, temperature, humidity, measurement_range_id, measurement_speed, t_ref, rh_ref")
-                log.log_message("Units: -,-,s,V,pA,°C,RHin%,-,-,RHin%,°C")
+                log.log_message("Params: date, time, absolute_time, voltage, current, temperature, humidity, measurement_range_id, measurement_speed")
+                log.log_message("Units: -,-,s,V,pA,°C,RHin%,-,-")
 
-                # Start to record
+                # start to record
                 self.record()
 
     def record(self):
@@ -132,42 +137,19 @@ class RecordingFrame:
         :return: None
         """
 
-        # Get all sensor values
+        # get all sensor values
         values = measure.measure_all_values(self.electrometer, self.hvamp, self.hum_sensor, self.labjack)
 
-        # Append measurement range
+        # append measurement range
         values.append(self.electrometer.range)
 
         # append measurement speed
         values.append(self.electrometer.speed)
 
-        ############################
-        # hum ref values
-        # Read analog IN at humidity sensor port
-        result = self.labjack.read_analog("AIN13")
-
-        # Convert from V to RH in % with linear equation according to datasheet
-        convert = round(0.0375*result*1000 - 37.7,2)
-        if convert < 0:
-            convert = 0
-
-        values.append(convert)
-
-        # Read analog IN at temp sensor port
-        result = self.labjack.read_analog("AIN12") * 1000
-
-        # Convert from mV to degree celsios with steinhart equations according to datasheet
-        resistance = (10000 * result) / (5000 - result)
-        test_cell_temp_in_k = 1 / (8.54942 * pow(10, -4) + 2.57305 * pow(10, -4) * numpy.log(resistance) + 1.65368 * pow(10, -7) * pow(numpy.log(resistance), 3))
-        test_cell_temp_in_deg_c = round(test_cell_temp_in_k - 273.15, 2)
-
-        values.append(test_cell_temp_in_deg_c)
-        #########################
-
-        # Log all values
+        # log all values
         log.log_values(values)
 
-        # Setup next record method call after specified measurement interval
+        # setup next record method call after specified measurement interval
         self.after_id = self.root.after(self.interval, self.record)
 
     def stop_recording(self):
@@ -176,17 +158,17 @@ class RecordingFrame:
         :return: None
         """
 
-        # Ask user for confirmation
+        # ask user for confirmation
         if tk.messagebox.askokcancel("Stop", "Stop recording?"):
 
             # reset filename (preparation for next logging process)
             log.finish_logging()
 
-            # Switch color of recording state frame to green
+            # switch color of recording state frame to green
             self.state_frame.configure(bg="green")
 
-            # Stop recording process
+            # stop recording process
             self.root.after_cancel(self.after_id)
 
-            # Reset after_id. Var is also used for checking if a logging process is in progress (in start_recording())
+            # reset after_id, var is also used for checking if a logging process is in progress (in start_recording())
             self.after_id = None

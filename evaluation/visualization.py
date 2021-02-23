@@ -25,6 +25,7 @@ from tkinter import filedialog
 from sklearn.linear_model import LinearRegression
 import numpy as np
 import scipy.optimize
+from matplotlib import rcParams
 
 
 # read file
@@ -93,6 +94,8 @@ class Visualization:
         self.ax.set_title("Current Measurement")
         self.ax.set_xlabel("Time in s")
         self.ax.set_ylabel("Current in pA")
+        # rcParams['font.family'] = 'sa'
+        rcParams['font.sans-serif'] = ['Times New Roman']
 
         self.canvas = tkagg.FigureCanvasTkAgg(self.fig, master=self.root)
         NavigationToolbar2Tk(self.canvas, self.root)
@@ -476,7 +479,7 @@ class Visualization:
 
         result = []
         time_list = []
-        for t in range(int(interval / 2), absolute_max_time - int(interval / 2), 2):
+        for t in range(int(interval / 2), absolute_max_time - int(interval / 2), 120):
             time_list.append(t)
 
         x_pos_min = 0
@@ -595,29 +598,41 @@ class Visualization:
         color_filter_pdc_pol = 'navy'
         color_filter_pdc_depol = 'darkorange'
 
+        plot_for_thesis = False
+        if not plot_for_thesis:
 
-        # first plot (rohdaten oder pdc)
-        if self.pdc_checkbox_var.get() == 0:
-            self.ax.plot(self.edited_data_absolute_time, data_raw, color=color_raw_no_pdc)
-        elif self.pdc_checkbox_var.get() == 1:
-            self.ax.plot(self.pol_time_list_raw, self.pol_data_list_raw, color=color_raw_pdc_pol)
-            self.ax.plot(self.depol_time_list_raw, self.depol_data_list_raw, color=color_raw_pdc_depol)
-            self.ax.plot(self.pdc_difference_time, self.pdc_difference, color="red")
-            self.ax.plot(self.time_list_pol, self.pol_fit, color="black")
-            self.ax.plot(self.time_list_depol, self.depol_fit, color="black")
-
-        else:
-            raise ValueError
-
-        # second plot (filter active)
-        if self.filter_checkbox_var.get() == 1:
+            # first plot (rohdaten oder pdc)
             if self.pdc_checkbox_var.get() == 0:
-                self.ax.plot(self.edited_data_absolute_time, self.data_filtered, color=color_filter_no_pdc)
+                self.ax.plot(self.edited_data_absolute_time, data_raw, color=color_raw_no_pdc)
             elif self.pdc_checkbox_var.get() == 1:
-                self.ax.plot(self.pol_time_list_raw, self.pol_data_list_filtered, color=color_filter_pdc_pol)
-                self.ax.plot(self.depol_time_list_raw, self.depol_data_list_filtered, color=color_filter_pdc_depol)
+                self.ax.plot(self.pol_time_list_raw, self.pol_data_list_raw, color=color_raw_pdc_pol, label="Pol raw data")
+                self.ax.plot(self.depol_time_list_raw, self.depol_data_list_raw, color=color_raw_pdc_depol, label="Depol raw data")
+                self.ax.plot(self.pdc_difference_time, self.pdc_difference, mfc='None', color="red", marker='^', label="PDC curve")
+
             else:
                 raise ValueError
+
+            # second plot (filter active)
+            if self.filter_checkbox_var.get() == 1:
+                if self.pdc_checkbox_var.get() == 0:
+                    self.ax.plot(self.edited_data_absolute_time, self.data_filtered, color=color_filter_no_pdc)
+                elif self.pdc_checkbox_var.get() == 1:
+                    self.ax.plot(self.time_list_pol, self.pol_fit, color=color_filter_pdc_pol, mfc='None', marker='o', label="Pol filtered data")
+                    self.ax.plot(self.time_list_depol, self.depol_fit, color=color_filter_pdc_depol, mfc='None', marker='d', label="Depol filtered data")
+                    # self.ax.plot(self.pol_time_list_raw, self.pol_data_list_filtered, color=color_filter_pdc_pol)
+                    # self.ax.plot(self.depol_time_list_raw, self.depol_data_list_filtered, color=color_filter_pdc_depol)
+                else:
+                    raise ValueError
+        else:
+            pdc = True
+            if pdc:
+                self.ax.set_title("PDC Measurement with PET Specimen (Electrometer)")
+                self.ax.plot(self.pol_time_list_raw, self.pol_data_list_raw, color=color_raw_pdc_pol, label="Pol raw data")
+                self.ax.plot(self.depol_time_list_raw, self.depol_data_list_raw, color=color_raw_pdc_depol, label="Depol raw data")
+                self.ax.plot(self.time_list_pol, self.pol_fit, color=color_filter_pdc_pol, mfc='None', marker='o', label="Pol filtered data")
+                self.ax.plot(self.time_list_depol, self.depol_fit, color=color_filter_pdc_depol, mfc='None', marker='d', label="Depol filtered data")
+                self.ax.plot(self.pdc_difference_time, self.pdc_difference, mfc='None', color="red", marker='^', label="PDC curve")
+
 
         # print
         print("pdc_pol_time", self.pol_time_list_raw)
@@ -643,6 +658,8 @@ class Visualization:
         print("###########################################")
 
         self.ax.grid()
+        self.ax.legend()
+        plt.rcParams["font.family"] = "Times New Roman"
         self.ax.set_xlabel("Time in s")
         self.canvas.draw()
 

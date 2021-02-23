@@ -4,10 +4,22 @@ import tkinter.messagebox
 
 
 class Relays:
+    """ This class provides a set of methods to control the low voltage relays in the 'relay box'.
+
+    Methods
+    ---------
+    switch_relay()          Switch a given relay to "LOW" or "HIGH". Updates automatically the relevant class vars.
+    switch_off_all_relays() Use at safety circuit startup or when labjack reconnects to assure the relay states are correctly set.
+
+    """
 
     def __init__(self, labjack):
+        """ Constructor of the class Relays. Initialize class vars, i.e. init states for all relays.
 
-        # init vars
+        :param labjack:
+        """
+
+        # init class var for labjack connection
         self.labjack = labjack
 
         # default n/a. must be set afterwards always with "open" or "closed" (!)
@@ -16,11 +28,11 @@ class Relays:
         self.gnd_relay_state = "n/a"
         self.lamp_state = "n/a"
 
-        # Init message var
+        # init message var for notifying the user via GUI in case of an error
         self.safety_message = ""
 
     def switch_relay(self, name, state, labjack):
-        """ Switch relays
+        """ Switch relay to a given state
 
         :param name: relay to switch (must be "HV", "GND", "SAFETY" or "LAMP")
         :param state: switch state (must be "ON" or "OFF")
@@ -30,26 +42,26 @@ class Relays:
         :return: None
         """
 
-        # Print function call if debug mode is on
+        # print function call if debug mode is on
         if Parameters.DEBUG:
             print("Relay class call: ", name, state)
 
-        # Check if name is string
+        # check if name is string
         if not isinstance(name, str):
             raise TypeError
 
-        # Check if state is string
+        # check if state is string
         if not isinstance(state, str):
             raise TypeError
 
-        # Check if safety circuit is closed if hv or gnd relay is intended to switch on -> DON'T REMOVE, SAFETY CRITICAL
+        # check if safety circuit is closed if hv or gnd relay is intended to switch on -> DON'T REMOVE, SAFETY CRITICAL
         if self.safety_state == "open":
             if name == 'HV' or name == 'GND':
                 if state == "ON":
                     tkinter.messagebox.showerror("ERROR", "Close safety circuit first.")
                     return
 
-        # Check if safety relay is intended to close while Pilz S1 or Pilz S2 is open
+        # check if safety relay is intended to close while Pilz S1 or Pilz S2 is open
         if name == "SAFETY" and state == "ON":
             s1_state = self.labjack.read_digital(Parameters.LJ_DIGITAL_IN_PILZ_S1)
             s2_state = self.labjack.read_digital(Parameters.LJ_DIGITAL_IN_PILZ_S2)
@@ -60,7 +72,8 @@ class Relays:
                 self.safety_message = "Error! Close high voltage box first"
                 return
 
-        # Check if state is valid and prepare to switch
+        # check if state is valid and prepare to switch
+        # (!) note: relays are low-active. 'HIGH' corresponds to 'OFF' (!)
         if state == 'ON':
             write = 'LOW'
             state_to_store = "closed"
@@ -70,7 +83,7 @@ class Relays:
         else:
             raise ValueError
 
-        # Check if name is valid and prepare labjack port
+        # check if name is valid and prepare labjack port
         if name == 'SAFETY':
             port = Parameters.LJ_DIGITAL_OUT_SAFETY_RELAY
         elif name == 'HV':
@@ -82,6 +95,7 @@ class Relays:
         else:
             raise ValueError
 
+        # try to write the statement
         try:
             if Parameters.DEBUG:
                 print("write port: ", port, " value, ", write)
@@ -111,9 +125,10 @@ class Relays:
 
         :return: True if successful, False if an error occurred.
         """
-        # Switch off all relays
+
+        # switch off all relays
         try:
-            # Note: Relays are low-active. 'HIGH' corresponds to 'OFF' (!)
+            # (!) note: relays are low-active. 'HIGH' corresponds to 'OFF' (!)
             self.labjack.write_digital(Parameters.LJ_DIGITAL_OUT_SAFETY_RELAY, "HIGH")
             self.labjack.write_digital(Parameters.LJ_DIGITAL_OUT_GND_RELAY, "HIGH")
             self.labjack.write_digital(Parameters.LJ_DIGITAL_OUT_HV_RELAY, "HIGH")
@@ -123,7 +138,7 @@ class Relays:
                 print("CRITICAL ERROR. ASSURE ALL RELAYS ARE SWITCHED OFF BEFORE GUI STARTUP")
             return False
         else:
-            # Init relay states if no error occurred
+            # init relay states if no error occurred
             self.safety_state = "open"
             self.gnd_relay_state = "open"
             self.hv_relay_state = "open"

@@ -11,7 +11,9 @@ class ControlFrame:
     Methods
     ---------
     auto_update_labels()    Starts to periodically update the gui state labels (control frame)
-    enable_electrometer()   Enables the amperemeter of the electrometer after the user has confirmed to do so
+    enable_electrometer()   Enables the ammeter of the electrometer after the user has confirmed to do so
+    disable_electrometer()  Disables the ammeter of the electrometer
+    set_voltage()           Sets the voltage of the selected voltage source
     """
 
     def __init__(self, root, labjack, relays, electrometer, hvamp):
@@ -102,12 +104,12 @@ class ControlFrame:
         self.auto_update_labels()
 
     def auto_update_labels(self):
-        """ Starts to periodically update the gui state labels (control frame)
+        """ Starts to periodically update the gui state labels (control frame).
 
         :return: None
         """
 
-        # Prepare label text and label colour for relays
+        # prepare label text and label colour for relays
         label_text = [self.relays.hv_relay_state, self.relays.gnd_relay_state]
         label_colours = []
         for element in label_text:
@@ -118,11 +120,11 @@ class ControlFrame:
             else:
                 raise ValueError
 
-        # Check if label colours list is valid
+        # check if label colours list is valid
         if len(label_colours) != 2:
             raise ValueError
 
-        # Prepare label text and label colour for ampmeter
+        # prepare label text and label colour for ammeter
         if self.electrometer.ampmeter_state:
             ampmeter_text = "on"
             ampmeter_color = "green"
@@ -130,22 +132,22 @@ class ControlFrame:
             ampmeter_text = "off"
             ampmeter_color = "red"
 
-        # Update state labels
+        # update state labels
         self.hv_relay_state_label.configure(text=label_text[0], fg=label_colours[0])
         self.gnd_relay_state_label.configure(text=label_text[1], fg=label_colours[1])
         self.ampmeter_state_label.configure(text=ampmeter_text, fg=ampmeter_color)
 
-        # Update state frame (red if hv relay is closed, green otherwise)
+        # update state frame (red if hv relay is closed, green otherwise)
         if label_text[0] == 'closed':
             self.state_frame.configure(bg="red")
         else:
             self.state_frame.configure(bg="green")
 
-        # Repeat at a given time interval
+        # repeat at a given time interval
         self.root.after(500, self.auto_update_labels)
 
     def enable_electrometer(self):
-        """ Enables the amperemeter of the electrometer after the user has confirmed to do so
+        """ Enables the ammeter of the electrometer after the user has confirmed to do so.
 
         :return: None
         """
@@ -161,28 +163,34 @@ class ControlFrame:
                 tk.messagebox.showerror("Error", "Electrometer is not connected!")
 
     def disable_electrometer(self):
-        """ Disables the amperemeter of the electrometer
+        """ Disables the amperemeter of the electrometer.
 
         :return: None
         """
 
+        # disable ammeter if connection is alive
         if self.electrometer.check_connection():
             self.electrometer.disable_current_input()
         else:
             tk.messagebox.showerror("Error", "Electrometer is not connected!")
 
     def set_voltage(self):
+        """ Set the voltage of the selected voltage source
+
+        :return: None
+        """
+
+        # if voltage dropdown is 0, hvamp is selected
         if self.source_dropdown.current() == 0:
             self.hvamp.set_voltage(int(self.voltage.get()))
             Parameters.active_source = 'h'
+        # if voltage dropdown is 1, electrometer is selected
         elif self.source_dropdown.current() == 1:
             self.electrometer.enable_source_output()
             Parameters.active_source = 'e'
             try:
                 self.electrometer.set_voltage(int(self.voltage.get()))
             except InterlockError:
-                tkinter.messagebox.showerror("ERROR",
-                                             "Electrometer Interlock Error. \nHigh Voltage cannot be enabled because"
-                                             "interlock is not closed.")
+                tkinter.messagebox.showerror("ERROR", "Electrometer Interlock Error. \nHigh Voltage cannot be enabled because interlock is not closed.")
         else:
             raise ValueError

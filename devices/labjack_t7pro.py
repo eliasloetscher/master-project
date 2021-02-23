@@ -31,32 +31,32 @@ class LabjackConnection:
 
     def __init__(self):
         """ Constructor of the class LabjackConnection.
-        Initialize the class vars and setup a labjack connection handle
+         Initialize the class vars and setup a labjack connection handle.
         """
 
-        # Labjack connection handle (default: None. If connected: labjack handler instance)
+        # labjack connection handle (default: None. If connected: labjack handler instance)
         self.connection_handle = None
 
-        # Labjack connection state (default: None, connection_error: False, connected: True)
+        # labjack connection state (default: None, connection_error: False, connected: True)
         self.connection_state = False
 
-        # Try to connect
+        # try to connect
         self.connect()
 
     def connect(self):
-        """ Function used for connecting to labjack with parameters specified in Parameters class
+        """ Function used for connecting to labjack with parameters specified in Parameters class.
 
         :return: True if connection successful, False if connection error occurred
         """
 
-        # Check if already connected
+        # check if already connected
         if self.connection_state:
             if Parameters.DEBUG:
                 print("Function labjack_connection.connect: already connected!")
             return True
-        # If not, try to connect
+        # if not, try to connect
         else:
-            # Open Labjack connection with given parameters
+            # open Labjack connection with given parameters
             try:
                 self.connection_handle = ljm.openS("ANY", Parameters.LABJACK_CONNECTION, Parameters.LABJACK_SERIAL_NUMBER)
             except (ValueError, LJMError):
@@ -65,7 +65,7 @@ class LabjackConnection:
                 self.connection_state = False
                 return False
 
-            # Check for success
+            # check for success
             if self.connection_handle > 0:
                 if Parameters.DEBUG:
                     info = ljm.getHandleInfo(self.connection_handle)
@@ -84,25 +84,27 @@ class LabjackConnection:
                 return False
 
     def get_handler(self):
-        """
+        """ Returns the labjack connection handler
 
-        :return: connection handler
+        :return: connection handler instance
         """
         return self.connection_handle
 
     def get_connection_state(self):
-        """
+        """ Returns the connection state
 
-        :return: connection state
+        :return: connection state, True if connected, False if not.
         """
         return self.connection_state
 
     def read_analog(self, port):
-        """
+        """ Read an analog voltage value from a given port.
 
         :param port: Analog port to read value from
         :return: Analog input value in Volt [V]
         """
+
+        # try to read
         try:
             result = ljm.eReadName(self.connection_handle, port)
         except (TypeError, LJMError):
@@ -113,18 +115,20 @@ class LabjackConnection:
         return result
 
     def read_digital(self, port):
-        """
+        """ Read a digital value and map to "HIGH", or "LOW"
 
         :param port: Digital port to read value from
-        :return: Digital value of a given FIO port
+        :return: Digital value of a given FIO port, "HIGH", or "LOW" as string
         :exception TypeError: if port is not string
         :exception ValueError: if collected result is not correct
         :exception LJMError: An error was returned from the LJM library call
         """
+
+        # check input parameters
         if not isinstance(port, str):
             raise TypeError
 
-        result = -1
+        # try to read digital value from given port
         try:
             result = ljm.eReadName(self.connection_handle, port)
         except (TypeError, LJMError):
@@ -132,6 +136,7 @@ class LabjackConnection:
             self.close_connection()
             return False
 
+        # map result to "LOW" or "HIGH"
         if result == 0.0:
             return "LOW"
         elif result == 1.0:
@@ -140,7 +145,7 @@ class LabjackConnection:
             raise ValueError
 
     def write_digital(self, port, value):
-        """
+        """ Write a digital value ("HIGH" or "LOW") to a given port.
 
         :param port: Digital port to write a value
         :param value: Value to write, either "HIGH" or "LOW"
@@ -150,9 +155,11 @@ class LabjackConnection:
         :exception LJMError: An error was returned from the LJM library call
         """
 
+        # check input parameters
         if not isinstance(value, str) or not isinstance(port, str):
             raise TypeError
 
+        # map input string to write value
         if value == "LOW":
             state = 0
         elif value == "HIGH":
@@ -160,6 +167,7 @@ class LabjackConnection:
         else:
             raise ValueError
 
+        # try to write
         try:
             ljm.eWriteName(self.connection_handle, port, state)
         except (TypeError, LJMError):
@@ -168,8 +176,8 @@ class LabjackConnection:
             return False
 
     def ljtick_dac_set_analog_out(self, port, voltage):
-        """
-        Writes the analog output voltage to the LJTick DAC 0 to 10 V.
+        """ Writes the analog output voltage to the LJTick DAC 0 to 10 V.
+
         :param port: "A" or "B", type <str>
         :param voltage: output voltage 0-10V, type <float>
         :return: Labjack I2C acknowledgement (Acked if non-zero value)
@@ -178,6 +186,7 @@ class LabjackConnection:
         :exception LJMError: An error was returned from the LJM library call
         """
 
+        # check input parameters
         if not isinstance(port, str) or not isinstance(voltage, float):
             raise TypeError
 
@@ -194,6 +203,7 @@ class LabjackConnection:
         else:
             raise ValueError
 
+        # try to write value
         try:
             ljm.eWriteName(self.connection_handle, write, voltage)
         except (TypeError, LJMError):
@@ -202,7 +212,7 @@ class LabjackConnection:
             return False
 
     def set_analog_in_resolution(self, port, resolution):
-        """
+        """ Set the measurement resolution of an analog input port.
 
         :param port: AIN0 - AIN12
         :param resolution: adc resolution in bits (0-12)
@@ -212,12 +222,14 @@ class LabjackConnection:
         :return: None
         """
 
+        # check input parameters
         if not isinstance(port, str) or not isinstance(resolution, int):
             raise TypeError
 
         if not port[0:3] == "AIN":
             raise ValueError
 
+        # get port number from given port
         if len(port) == 4:
             port_number = int(port[3])
         elif len(port) == 5:
@@ -225,13 +237,18 @@ class LabjackConnection:
         else:
             raise ValueError
 
+        # check if port number is valid
         if port_number < 0 or port_number > 12:
             raise ValueError
 
+        # check if given resolution is valid
         if resolution < 0 or resolution > 12:
             raise ValueError
 
+        # prepare write statement
         write = str(port + "_RESOLUTION_INDEX")
+
+        # try to write
         try:
             ljm.eWriteName(self.connection_handle, write, resolution)
         except (TypeError, LJMError):
@@ -240,9 +257,9 @@ class LabjackConnection:
             return False
 
     def close_connection(self):
-        """
-        Closes the labjack connection
-        :return:
+        """ Closes the labjack connection.
+
+        :return: None
         """
         try:
             ljm.close(self.connection_handle)

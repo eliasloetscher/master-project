@@ -13,10 +13,7 @@ def measure_all_values(electrometer, hvamp, humidity_sensor, labjack):
     electrometer_temperature = round(measure_temperature(electrometer), 2)
     humidity = round(measure_humidity(humidity_sensor), 2)
 
-    # hum ref
-    temperature = humidity_sensor.read_temperature()
-
-    values = [hv_amp_voltage, electrometer_current, temperature, humidity]
+    values = [hv_amp_voltage, electrometer_current, electrometer_temperature, humidity]
 
     if Parameters.DEBUG:
         print("measured values: ", values)
