@@ -164,22 +164,22 @@ class Visualization:
         # recalculate button
         tk.Button(self.root, text="Recalculate", command=self.recalculate).place(x=1070, y=500)
 
-        # PDC shift
+        # PDC shift checkbox, labels and buttons
         tk.Label(self.root, text="PDC Shift", font="Helvetica 12 bold").place(x=1070, y=550)
         self.pdc_checkbox_var = tk.IntVar()
         pdc_checkbox = tk.Checkbutton(self.root, variable=self.pdc_checkbox_var, onvalue=1, offvalue=0, command=self.pdc_state)
-        pdc_checkbox.place(x=1140, y=550)
-        tk.Label(self.root, text="t_init: ").place(x=1070, y=610)
-        tk.Label(self.root, text="t_pol: ").place(x=1070, y=630)
+        pdc_checkbox.place(x=1150, y=550)
+        tk.Label(self.root, text="t_init: ").place(x=1070, y=580)
+        tk.Label(self.root, text="t_pol: ").place(x=1070, y=610)
 
         self.shift_t1 = tk.Entry(self.root, width=5)
         self.shift_t2 = tk.Entry(self.root, width=5)
 
-        self.shift_t1.place(x=1140, y=610)
-        self.shift_t2.place(x=1140, y=630)
+        self.shift_t1.place(x=1140, y=580)
+        self.shift_t2.place(x=1140, y=610)
 
-        tk.Button(self.root, text="Update", command=self.update_pdc_shift).place(x=1070, y=660)
-        tk.Button(self.root, text="Export", command=self.export).place(x=1140, y=660)
+        tk.Button(self.root, text="Update", command=self.update_pdc_shift).place(x=1070, y=640)
+        tk.Button(self.root, text="Export", command=self.export).place(x=1140, y=640)
 
         # run evaluation gui
         self.root.mainloop()

@@ -1,5 +1,3 @@
-
-
 class Parameters:
     """ This class defines all parameters which are used in the mviss resistivity measurement test setup.
 
@@ -80,5 +78,5 @@ class Parameters:
     LJ_ANALOG_OUT_HVA_REF = "A"
     LJ_ANALOG_OUT_HVA_CTRL = "B"
 
-    # active source
+    # active source default value. can be either 'h' for high voltage amplifier or 'e' for electrometer
     active_source = 'h'

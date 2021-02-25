@@ -1,5 +1,7 @@
 """
-Documentation goes here
+This module implements the breakdown detection based on two mechanisms:
+- If the current is above a specified limit (default 100 nA)
+- If the voltage deviates more than a specified percentage (default 10%)
 """
 
 import time
@@ -9,9 +11,15 @@ from parameters import Parameters
 
 
 def breakdown(hvamp, labjack, electrometer, relays, type, values):
-    """
+    """ This method is executed if a breakdown is detected. Both voltage sources are immediately switched off,
+    the HV relay is opened, the GND relay is closed, and the user is informed via popup message.
 
-    :param hvamp:
+    :param hvamp: instance of the hvamp connection
+    :param labjack: instance of the labjack connection
+    :param electrometer: instance of the electrometer connection
+    :param relays: instance of the class relays
+    :param type: type of the breakdwon detection mechanism, either 'current' or 'voltage'
+    :param values: sensor values collected during breakdown
     :return:
     """
 
@@ -44,22 +52,25 @@ def breakdown(hvamp, labjack, electrometer, relays, type, values):
 
 
 def breakdown_detection(root, labjack, relays, electrometer, hvamp, flag):
-    """
+    """ Measures the voltage and current at an interval specified in the module parameters. Triggers the
+    breakdown method if a breakdown is detected according to the mechanisms described in the introduction of this file.
 
-    :param flag:
-    :param hvamp:
-    :param electrometer:
-    :param labjack:
+    :param root: gui root instance for displaying the popup
+    :param labjack: instance of the labjack connection
+    :param relays: instance of the class relays
+    :param electrometer: instance of the elctrometer connection
+    :param hvamp: instance of the high voltage amplifier class
+    :param flag: is either True or False, used for detection of two deviating datapoints in a row
     :return:
     """
 
-    # Init temporary flag vars
+    # init temporary flag vars
     flag_voltage = False
     flag_current = False
 
     # --------------- BREAKDOWN DETECTION VIA VOLTAGE --------------- #
 
-    # Measure voltage
+    # measure voltage
     measured_voltage = measure.measure_voltage(labjack)
 
     # get voltage currently set by user
@@ -91,21 +102,20 @@ def breakdown_detection(root, labjack, relays, electrometer, hvamp, flag):
 
     # --------------- BREAKDOWN DETECTION VIA CURRENT --------------- #
 
-    # Measure current
-    measured_current_electrometer_in_pa = 0
-    # measured_current_electrometer_in_pa = measure.measure_current(electrometer)
+    # measure current
+    measured_current_electrometer_in_pa = measure.measure_current(electrometer)
     measured_current_hvamp = hvamp.get_current()
 
     # convert to mA
     measured_current_electrometer_in_ma = measured_current_electrometer_in_pa*0.001*0.001
 
-    # Get current limit set in 'Parameters'
+    # get current limit set in 'Parameters'
     current_limit = Parameters.BD_CURRENT_LIMIT
 
-    # Init values list
+    # init values list
     values = [measured_current_electrometer_in_ma, measured_current_hvamp, current_limit]
 
-    # Check if current is below limit
+    # check if current is below limit
     if measured_current_electrometer_in_ma > current_limit or measured_current_hvamp > current_limit:
         if flag:
             breakdown(hvamp, labjack, electrometer, relays, "Current", str("[Electrometer, HVAmp, Setbyuser]" + str(values) + " mA"))
@@ -116,14 +126,9 @@ def breakdown_detection(root, labjack, relays, electrometer, hvamp, flag):
 
     # --------------- FINSIH ROUTINE --------------- #
 
-    # Determine flag
+    # determine flag
     if flag_voltage or flag_current:
         flag = True
 
-    # Check for breakdown periodically
+    # check for breakdown periodically
     root.after(Parameters.BD_INTERVAL*1000, lambda: breakdown_detection(root, labjack, relays, electrometer, hvamp, flag))
-
-
-
-
-

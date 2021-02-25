@@ -20,24 +20,26 @@ from parameters import Parameters
 
 
 def on_closing(root, electrometer, relays, hvamp):
-    """ Method which is called if the user explicitly quits the gui, i.e. clicks on the "X" button on top right corner
+    """ Method which is called if the user explicitly quits the gui, i.e. clicks on the "X" button on top right corner.
 
     :param root: tkinter root instance
-    :param relays: object for controlling the relays (use the corresponding class in the package 'devices'
+    :param electrometer: instance of the class Electrometer
+    :param relays: instance of the class Relays
+    :param hvamp: instance of the class HVAmp
     :return: None
     """
 
-    # Ask user for confirmation
+    # ask user for confirmation
     if tk.messagebox.askokcancel("Quit", "Do you want to quit?"):
-        # Switch off all relays
+        # switch off all relays
         relays.switch_off_all_relays()
-        # Set LJ-Tick voltage to zero (hvamp control voltage)
+        # set LJ-Tick voltage to zero (hvamp control voltage)
         hvamp.set_voltage(0)
-        # Set Electrometer voltage to zero, disable ammeter and source
+        # set Electrometer voltage to zero, disable ammeter and source
         electrometer.set_voltage(0)
         electrometer.disable_current_input()
         electrometer.disable_source_output()
-        # Close tkinter instance
+        # close tkinter instance
         root.destroy()
 
 
@@ -49,52 +51,52 @@ def gui():
     :return: None
     """
 
-    # Setup device connections
+    # setup device connections
     labjack = LabjackConnection()
     relays = Relays(labjack)
     electrometer = ElectrometerControl()
     hvamp = HVAmp(labjack)
     humidity_sensor = SensorHtm2500lf(labjack)
 
-    # Define basic labjack parameters
+    # define basic labjack parameters
     labjack.set_analog_in_resolution(Parameters.LJ_ANALOG_IN_HV_PROBE, 12)  # 12-bit adc resolution
 
-    # Define basic electrometer parameters
+    # define basic electrometer parameters
     electrometer.set_speed('stable')
 
-    # Initialize tkinter instance
+    # initialize tkinter instance
     root = tk.Tk()
 
-    # Start safety circuit
+    # start safety circuit
     safety.start_safety_circuit(root, labjack, relays, electrometer, hvamp)
 
-    # Start breakdown detection
+    # start breakdown detection
     #bd.breakdown_detection(root, labjack, relays, electrometer, hvamp, False)
 
-    # Set gui name
-    root.title("MVISS")
+    # set gui name
+    root.title("MVISS Control")
 
-    # Set global options
+    # set global options
     root.option_add("*Font", "TkDefaultFont 12")
 
-    # Set and place gui title
+    # set and place gui title
     gui_title = tk.Label(root, text="Resistivity Measurement Test Setup", font='Helvetica 18 bold')
     gui_title.grid(row=0, columnspan=2, pady=10)
 
-    # Initialize main frames
+    # initialize main frames
     DevicesFrame(root, labjack, electrometer)
     SafetyCircuitFrame(root, labjack, relays)
     ControlFrame(root, labjack, relays, electrometer, hvamp)
     MeasurementFrame(root, electrometer, hvamp, humidity_sensor, labjack)
     RecordingFrame(root, electrometer, hvamp, humidity_sensor, labjack, relays)
 
-    # Introduce closing action with protocol handler
+    # introduce closing action with protocol handler
     root.protocol("WM_DELETE_WINDOW", lambda: on_closing(root, electrometer, relays, hvamp))
 
-    # Execute GUI
+    # execute GUI
     root.mainloop()
 
 
 if __name__ == "__main__":
-    # Start graphical user interface
+    # start graphical user interface
     gui()
