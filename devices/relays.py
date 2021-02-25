@@ -56,7 +56,7 @@ class Relays:
 
         # check if safety circuit is closed if hv or gnd relay is intended to switch on -> DON'T REMOVE, SAFETY CRITICAL
         if self.safety_state == "open":
-            if name == 'HV' or name == 'GND':
+            if name == 'HV':
                 if state == "ON":
                     tkinter.messagebox.showerror("ERROR", "Close safety circuit first.")
                     return
