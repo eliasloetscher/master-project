@@ -63,6 +63,8 @@ class AutoRunFrame:
         self.canvas = None
         self.fig = None
         self.ax = None
+        self.plot_mode = tk.StringVar()
+        self.plot_mode.set('lin')
 
         # init class vars for setup window
         self.t_one_result = None
@@ -237,31 +239,27 @@ class AutoRunFrame:
             tk.Label(self.autorun_main_window, text="Plot", font="Helvetica 12 bold").place(x=1020, y=90)
             tk.Button(self.autorun_main_window, text="Start", command=self.start_plot).place(x=1020, y=120)
             tk.Button(self.autorun_main_window, text="Stop", command=self.stop_plot).place(x=1070, y=120)
-
-            tk.Label(self.autorun_main_window, text="Filter", font="Helvetica 12 bold").place(x=1020, y=170)
-            tk.Button(self.autorun_main_window, text="Average", command=self.stop_plot).place(x=1020, y=200)
-
-            tk.Label(self.autorun_main_window, text="Curve-Fitting", font="Helvetica 12 bold").place(x=1020, y=250)
-            tk.Button(self.autorun_main_window, text="Exponential", command=self.stop_plot).place(x=1020, y=280)
+            tk.Button(self.autorun_main_window, text="Lin mode", command=lambda: self.plot_mode.set("lin")).place(x=1020, y=160)
+            tk.Button(self.autorun_main_window, text="Log mode", command=lambda: self.plot_mode.set("log")).place(x=1020, y=200)
 
             # init speed dropdown
-            tk.Label(self.autorun_main_window, text="Speed", font="Helvetica 12 bold").place(x=1020, y=320)
+            tk.Label(self.autorun_main_window, text="Speed", font="Helvetica 12 bold").place(x=1020, y=250)
             speed_choices = ['quick', 'normal', 'stable']
             self.speed_dropdown = ttk.Combobox(self.autorun_main_window, values=speed_choices, width=10)
             self.speed_dropdown.current(2)
             self.speed_update("")
-            self.speed_dropdown.place(x=1020, y=350)
+            self.speed_dropdown.place(x=1020, y=280)
 
             # bind dropdown selection event to function
             self.speed_dropdown.bind("<<ComboboxSelected>>", self.speed_update)
 
             # init range dropdown
-            tk.Label(self.autorun_main_window, text="Range", font="Helvetica 12 bold").place(x=1020, y=400)
+            tk.Label(self.autorun_main_window, text="Range", font="Helvetica 12 bold").place(x=1020, y=320)
             range_choices = ['auto', '2 pA', '20 pA', '200 pA', '2 nA', '20 nA', '200 nA', '2 uA', '20 uA', '200 uA', '2 mA', '20 mA']
             self.range_dropdown = ttk.Combobox(self.autorun_main_window, values=range_choices, width=10)
             self.range_dropdown.current(0)
             self.range_update("")
-            self.range_dropdown.place(x=1020, y=430)
+            self.range_dropdown.place(x=1020, y=350)
 
             # bind dropdown selection event to function
             self.range_dropdown.bind("<<ComboboxSelected>>", self.range_update)
@@ -286,15 +284,20 @@ class AutoRunFrame:
 
         # set all labels, plot the data
         self.ax.cla()
-        self.ax.plot(self.data_time_x, self.data_current_y)
+        if self.plot_mode.get() == 'lin':
+            self.ax.plot(self.data_time_x, self.data_current_y)
+        elif self.plot_mode.get() == 'log':
+            self.ax.semilogy(self.data_time_x, self.data_current_y)
+        else:
+            raise ValueError
         self.ax.grid()
         self.ax.set_title("Current Measurement")
         self.ax.set_xlabel("Time in s")
         self.ax.set_ylabel("Current in pA")
         self.canvas.draw()
 
-        # repeat after 1 second
-        self.after_id_plot = self.root.after(1000, self.start_plot)
+        # repeat after 500 ms
+        self.after_id_plot = self.root.after(500, self.start_plot)
 
     def stop_plot(self):
         """ Stop (interrupt) the plotting process. This does NOT interrupt the measurement, but allows the user to
@@ -458,7 +461,9 @@ class AutoRunFrame:
         """
 
         # get all sensor values
+        timenow = time.time()
         self.values = measure.measure_all_values(self.electrometer, self.hvamp, self.hum_sensor, self.labjack)
+        print("Time needed for measurement: ", time.time()-timenow)
 
         # set start time in seconds with 2 decimal places in first iteration of record
         if self.after_id_record is None:

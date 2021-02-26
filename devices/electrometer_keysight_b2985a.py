@@ -221,12 +221,12 @@ class ElectrometerControl:
         result = 0
         i = 0
 
-        # Try to read current. If an error occurs, try it again 5x with an interval of 1 second. Return 0 otherwise.
+        # Try to read current. If an error occurs, try it again 2x with an interval of 0.2 second. Return 0 otherwise.
         # This helps to keep the gui responsive when a communication error occurs. Don't change!
-        while i < 5:
+        while i < 2:
             try:
                 self.session.write('MEAS:CURR:DC?')
-                time.sleep(0.1)
+                time.sleep(0.5)
                 result = self.session.read()
                 break
             except VisaIOError:
