@@ -103,6 +103,9 @@ class Visualization:
 
         self.canvas.draw()
 
+        self.popup = None
+        self.export_filename = None
+
         # Basic Settings
         tk.Label(self.root, text="Basic Settings", font="Helvetica 12 bold").place(x=1070, y=10)
         tk.Label(self.root, text="File: ").place(x=1070, y=40)
@@ -179,7 +182,8 @@ class Visualization:
         self.shift_t2.place(x=1140, y=610)
 
         tk.Button(self.root, text="Update", command=self.update_pdc_shift).place(x=1070, y=640)
-        tk.Button(self.root, text="Export", command=self.export).place(x=1140, y=640)
+
+        tk.Button(self.root, text="Export in csv", command=self.export_popup).place(x=1140, y=640)
 
         # run evaluation gui
         self.root.mainloop()
@@ -306,8 +310,24 @@ class Visualization:
         self.filter_checkbox_var.set(1)
         self.update_plot()
 
+    def export_popup(self):
+        self.popup = tk.Toplevel(self.root)
+        self.popup.geometry('550x50')
+        self.popup.title("Export")
+        tk.Label(self.popup, text="Specify filename: ").grid(padx=10, pady=5, sticky="W")
+        self.export_filename = tk.Entry(self.popup, width=30)
+        self.export_filename.grid(row=0, column=1, padx=10, pady=5, sticky="W")
+        tk.Button(self.popup, text="Export", command=self.export).grid(row=0, column=2, padx=10, pady=5, sticky="W")
+
     def export(self):
-        with open('6.csv', 'w', newline='') as csvfile:
+        if self.export_filename.get() == "":
+            tk.messagebox.showerror("Error", "Please specify filename!")
+            return
+
+        user_filename = self.export_filename.get()+".csv"
+        self.popup.destroy()
+
+        with open(user_filename, 'w', newline='') as csvfile:
             spamwriter = csv.writer(csvfile, delimiter=' ', escapechar=' ', quoting=csv.QUOTE_NONE)
             spamwriter.writerow(['pdc_pol_time,pdc_pol_raw,pdc_depol_time,pdc_depol_raw,pdc_fit_pol_time,pdc_fit_pol_data,pdc_fit_depol_time,pdc_fit_depol_data,pdc_diff_time,pdc_diff_data'])
 
@@ -353,7 +373,6 @@ class Visualization:
                     msg += str(self.pdc_difference[i])
 
                 spamwriter.writerow([msg])
-
 
     def select_file(self):
         # reset class vars
