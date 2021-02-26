@@ -23,7 +23,8 @@ class AutoRunFrame:
     record()                Initialize and start the recording process
     stop_record()           Stop/Interrupt the recording process
     stop_auto_range()       Stops the auto ranging process
-    stop_measurement()      Abort the measurement runtime
+    abort_measurement()     Aborts the measurement runtime
+    stop_measurement()      Stops the measurement runtime
     switch_hv()             Switch to high voltage potential (used for manual mode)
     switch_gnd()            Switch to ground potential (used for manual mode)
     speed_update()          Sets the electrometer speed based on user input ('quick', 'normal', 'stable')
