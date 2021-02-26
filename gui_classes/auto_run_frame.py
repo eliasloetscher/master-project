@@ -55,6 +55,7 @@ class AutoRunFrame:
         self.after_id_plot = None
         self.after_id_record = None
         self.after_id_auto_range = None
+        self.after_id_measurement = None
 
         # init class vars for plotting
         self.data_current_y = []
@@ -119,7 +120,7 @@ class AutoRunFrame:
 
         # init type dropdown menu
         tk.Label(self.autorun_setup_window, text="Type:").grid(row=3, padx=10, pady=10, sticky="W")
-        choices = ['PDC', 'P only', "D only", 'Manual']
+        choices = ['PDC', 'P only', 'Manual']
         self.dropdown = ttk.Combobox(self.autorun_setup_window, values=choices, width=10)
         self.dropdown.current(0)
         self.dropdown.grid(row=3, column=1, padx=10, pady=10, sticky="W", columnspan=2)
@@ -164,19 +165,21 @@ class AutoRunFrame:
         # get current dropdown value
         self.type_dropdown = self.dropdown.current()
 
-        # hide and show respective elements depending on users choice
-        if self.dropdown.current() == 3:
-            self.reset_elements()
-        else:
-            self.reset_elements()
+        # reset elements (hide all dropdown related elements)
+        self.reset_elements()
+
+        # elements for 'pdc' and 'p only', i.e. t1/t2
+        if self.dropdown.current() == 0 or self.dropdown.current() == 1:
             self.times_title.grid(row=5, padx=10, pady=(15, 5), sticky="W", columnspan=2)
             self.t_one_label.grid(row=6, padx=10, pady=5, sticky="W")
             self.t_two_label.grid(row=7, padx=10, pady=5, sticky="W")
             self.t_one.grid(row=6, column=1, padx=10, pady=5, sticky="W")
             self.t_two.grid(row=7, column=1, padx=10, pady=5, sticky="W")
-            if self.dropdown.current() == 0:
-                self.t_three_label.grid(row=8, padx=10, pady=5, sticky="W")
-                self.t_three.grid(row=8, column=1, padx=10, pady=5, sticky="W")
+
+        # additional element for 'pdc', i.e. t3
+        if self.dropdown.current() == 0:
+            self.t_three_label.grid(row=8, padx=10, pady=5, sticky="W")
+            self.t_three.grid(row=8, column=1, padx=10, pady=5, sticky="W")
 
     def auto_run_main(self):
         """ Setup main window
@@ -195,7 +198,7 @@ class AutoRunFrame:
         if self.voltage_result == '':
             tk.messagebox.showerror("Error", "Please specify the voltage.", parent=self.autorun_setup_window)
 
-        elif (self.type_dropdown == 1 or self.type_dropdown == 2) and (self.t_one_result == '' or self.t_two_result == ''):
+        elif self.type_dropdown == 1 and (self.t_one_result == '' or self.t_two_result == ''):
             tk.messagebox.showerror("Error", "Please specify all time parameters", parent=self.autorun_setup_window)
 
         elif self.type_dropdown == 0 and self.t_three_result == '':
@@ -234,7 +237,7 @@ class AutoRunFrame:
             # init all buttons, dropdowns and labels
             tk.Label(self.autorun_main_window, text="Measurement", font="Helvetica 12 bold").place(x=1020, y=10)
             tk.Button(self.autorun_main_window, text="Start", command=lambda: self.measurement_runtime(0)).place(x=1020, y=40)
-            tk.Button(self.autorun_main_window, text="Stop", command=self.stop_measurement).place(x=1070, y=40)
+            tk.Button(self.autorun_main_window, text="Stop", command=self.abort_measurement).place(x=1070, y=40)
 
             tk.Label(self.autorun_main_window, text="Plot", font="Helvetica 12 bold").place(x=1020, y=90)
             tk.Button(self.autorun_main_window, text="Start", command=self.start_plot).place(x=1020, y=120)
@@ -265,10 +268,20 @@ class AutoRunFrame:
             self.range_dropdown.bind("<<ComboboxSelected>>", self.range_update)
 
             # display buttons if manual control is selected
-            if self.type_dropdown == 3:
+            if self.type_dropdown == 2:
                 tk.Label(self.autorun_main_window, text="Manual Control", font="Helvetica 12 bold").place(x=1020, y=640)
                 tk.Button(self.autorun_main_window, text="HV", command=self.switch_hv).place(x=1020, y=670)
                 tk.Button(self.autorun_main_window, text="GND", command=self.switch_gnd).place(x=1070, y=670)
+
+            # introduce closing action with protocol handler
+            self.autorun_main_window.protocol("WM_DELETE_WINDOW", lambda: self.on_closing())
+
+    def on_closing(self):
+        # ask user for confirmation
+        if tk.messagebox.askokcancel("Information", "Are you sure to close this window? \n", parent=self.autorun_main_window):
+            # finish processes
+            self.finish_all_processes()
+            self.autorun_main_window.destroy()
 
     def start_plot(self):
         """ (Re)start the plotting process.
@@ -318,9 +331,13 @@ class AutoRunFrame:
         :return: None
         """
 
-        # init step executed for all type dropdown choices
+        # --------------- SETUP STEP --------------- #
+        # setup step executed for all 'type dropdown' choices (pdc, p only, manual)
         if step == 0:
-            print("STARTED STEP 0")
+            print("STARTED SETUP STEP")
+            # check if measurement routine is already running
+            if self.after_id_measurement is not None:
+                tk.messagebox.showerror("Error", "Measurement is already running.", parent=self.autorun_setup_window)
             # init start time
             self.t_start = time.time()  # time in seconds
             # reset switch labels
@@ -329,8 +346,7 @@ class AutoRunFrame:
             self.switched_t_three_flag = False
             # Create log file with data information (DO NOT CHANGE)
             log.create_logfile(self.filename)
-            log.log_message(
-                "Params: date, time, absolute_time, voltage, current, temperature, humidity, measurement_range_id, measurement_speed")
+            log.log_message("Params: date, time, absolute_time, voltage, current, temperature, humidity, measurement_range_id, measurement_speed")
             log.log_message("Units: -,-,s,V,pA,°C,RHin%,-,-")
             # start log process
             self.record()
@@ -338,121 +354,84 @@ class AutoRunFrame:
             self.start_plot()
             # init time in seconds (scientific format with 2 decimal places
             self.data_start_time = round(time.time() * 1000, 2)
-            self.measurement_runtime(1)
+            # continue with automated measurement process if 'pdc' or 'p only' is selected
+            if self.type_dropdown == 0 or self.type_dropdown == 1:
+                self.measurement_runtime(1)
 
-        else:
-            # further steps depending on type dropdown choice (pdc, p only, d only, manual)
+        # --------------- FIRST STEP: SHORT-CIRCUITING SPECIMEN --------------- #
+        # GND relay is closed until t1 is reached
+        elif step == 1:
+            print("STARTED FIRST STEP: SHORT-CIRCUITING SPECIMEN")
+            # close GND relay for short-circuiting DUT
+            self.relays.switch_relay("GND", "ON", self.labjack)
+            # go to second step after t1 is reached
+            self.after_id_measurement =  self.root.after(int(self.t_one_result) * 1000, lambda: self.measurement_runtime(2))
+
+        # --------------- SECOND STEP: POLARIZATION --------------- #
+        # GND relay is opened, HV relay is closed until t2 is reached
+        elif step == 2:
+            print("STARTED SECOND STEP: POLARIZATION")
+            # open GND relay
+            self.relays.switch_relay("GND", "OFF", self.labjack)
+            # set voltage
+            if self.source_dropdown_result == 0:
+                self.hvamp.set_voltage(int(self.voltage_result))
+            elif self.source_dropdown_result == 1:
+                self.electrometer.enable_source_output()
+                time.sleep(0.1)
+                self.electrometer.set_voltage(int(self.voltage_result))
+            # switch on HV relay
+            self.relays.switch_relay("HV", "ON", self.labjack)
+            # step 3 if 'pdc' is selected or finish measurement (step 4) if 'p only' is selected
             if self.type_dropdown == 0:
-                if step == 1:
-                    print("PDC - STARTED STEP 1")
-                    # Close GND relay for short-circuiting DUT
-                    self.relays.switch_relay("GND", "ON", self.labjack)
-                    # wait for t1
-                    print("WAIT FOR ", int(self.t_one_result)*1000)
-                    self.root.after(int(self.t_one_result)*1000, lambda: self.measurement_runtime(2))
+                next_step = 3
+            if self.type_dropdown == 1:
+                next_step = 4
+            # go to respective step after t2 is reached
+            self.after_id_measurement = self.root.after(int(self.t_two_result) * 1000, lambda: self.measurement_runtime(next_step))
 
-                elif step == 2:
-                    print("PDC - STARTED STEP 2")
-                    # Open GND relay
-                    self.relays.switch_relay("GND", "OFF", self.labjack)
-                    # set voltage
-                    if self.source_dropdown_result == 0:
-                        self.hvamp.set_voltage(int(self.voltage_result))
-                    elif self.source_dropdown_result == 1:
-                        self.electrometer.enable_source_output()
-                        time.sleep(0.1)
-                        self.electrometer.set_voltage(int(self.voltage_result))
-                    # switch on HV relay
-                    self.relays.switch_relay("HV", "ON", self.labjack)
-                    # wait for t2
-                    self.root.after(int(self.t_two_result)*1000, lambda: self.measurement_runtime(3))
+        # --------------- THIRD STEP: DEPOLARIZATION --------------- #
+        # GND relay is closed, HV relay is closed until t3 is reached
+        elif step == 3:
+            print("STARTED THIRD STEP: DEPOLARIZATION")
+            self.hvamp.set_voltage(0)
+            self.electrometer.set_voltage(0)
+            self.relays.switch_relay("HV", "OFF", self.labjack)
+            self.relays.switch_relay("GND", "ON", self.labjack)
+            # finish measurement (step 4) after t3 is reached
+            self.after_id_measurement = self.root.after(int(self.t_three_result) * 1000, lambda: self.measurement_runtime(4))
 
-                elif step == 3:
-                    print("PDC - STARTED STEP 3")
-                    self.hvamp.set_voltage(0)
-                    self.electrometer.set_voltage(0)
-                    self.relays.switch_relay("HV", "OFF", self.labjack)
-                    self.relays.switch_relay("GND", "ON", self.labjack)
-                    # wait for t3
-                    self.root.after(int(self.t_three_result)*1000, lambda: self.measurement_runtime(4))
+        # --------------- FOURTH STEP: FINSIH --------------- #
+        elif step == 4:
+            print("STARTED FOURTH STEP: FINISH")
+            self.finish_all_processes()
+            tk.messagebox.showinfo("Finish", "Measurement was finished succesfully!", parent=self.autorun_main_window)
 
-                elif step == 4:
-                    print("PDC - STARTED STEP 4")
-                    # stop record, auto_range, log, and plot
-                    self.stop_record()
-                    self.stop_auto_range()
-                    log.finish_logging()
-                    self.stop_plot()
-                    tk.messagebox.showinfo("Finish", "Measurement was finished succesfully!", parent=self.autorun_main_window)
+        # if step is not 0-4, raise ValueError
+        else:
+            raise ValueError
 
-                else:
-                    raise ValueError
+    def finish_all_processes(self):
+        """ Finishes all auto_run processes possibly running
 
-            elif self.type_dropdown == 1:
-                if step == 1:
-                    print("P ONLY - STARTED STEP 1")
-                    # Close GND relay for short-circuiting DUT
-                    self.relays.switch_relay("GND", "ON", self.labjack)
-                    # wait for t1
-                    print("WAIT FOR ", int(self.t_one_result)*1000)
-                    self.root.after(int(self.t_one_result)*1000, lambda: self.measurement_runtime(2))
+        :return: None
+        """
+        # stop record, plot, auto_range, and measurement process
+        self.stop_record()
+        self.stop_auto_range()
+        self.stop_plot()
+        self.stop_measurement()
 
-                elif step == 2:
-                    print("P ONLY - STARTED STEP 2")
-                    # Open GND relay
-                    self.relays.switch_relay("GND", "OFF", self.labjack)
-                    # set voltage
-                    if self.source_dropdown_result == 0:
-                        self.hvamp.set_voltage(int(self.voltage_result))
-                    elif self.source_dropdown_result == 1:
-                        self.electrometer.enable_source_output()
-                        time.sleep(0.1)
-                        self.electrometer.set_voltage(int(self.voltage_result))
-                    # switch on HV relay
-                    self.relays.switch_relay("HV", "ON", self.labjack)
-                    # wait for t2
-                    self.root.after(int(self.t_two_result)*1000, lambda: self.measurement_runtime(3))
+        # finish logging process
+        log.finish_logging()
 
-                elif step == 3:
-                    print("P ONLY - STARTED STEP 3")
-                    # stop logging
-                    self.stop_record()
-                    log.finish_logging()
-                    self.stop_plot()
-                    self.hvamp.set_voltage(0)
-                    self.electrometer.set_voltage(0)
-                    self.relays.switch_relay("HV", "OFF", self.labjack)
-                    self.relays.switch_relay("GND", "ON", self.labjack)
-                    tk.messagebox.showinfo("Finish", "Measurement was finished succesfully!", parent=self.autorun_main_window)
+        # reset voltages to zero
+        self.hvamp.set_voltage(0)
+        self.electrometer.set_voltage(0)
 
-                else:
-                    raise ValueError
-
-            elif self.type_dropdown == 2:
-                if step == 1:
-                    print("D ONLY - STARTED STEP 1")
-                    # wait for t1
-                    print("WAIT FOR ", int(self.t_one_result)*1000)
-                    self.root.after(int(self.t_one_result)*1000, lambda: self.measurement_runtime(2))
-
-                elif step == 2:
-                    print("D ONLY - STARTED STEP 2")
-                    # set voltage
-                    self.relays.switch_relay("GND", "ON", self.labjack)
-                    # wait for t2
-                    self.root.after(int(self.t_two_result)*1000, lambda: self.measurement_runtime(3))
-
-                elif step == 3:
-                    print("D ONLY - STARTED STEP 3")
-                    # stop logging
-                    self.stop_record()
-                    log.finish_logging()
-                    self.stop_plot()
-                    self.root.after_cancel(self.after_id_auto_range)
-                    tk.messagebox.showinfo("Finish", "Measurement was finished succesfully!", parent=self.autorun_main_window)
-
-                else:
-                    raise ValueError
+        # switch hv relay off, switch gnd relay on
+        self.relays.switch_relay("HV", "OFF", self.labjack)
+        self.relays.switch_relay("GND", "ON", self.labjack)
 
     def record(self):
         """ Periodically logs all sensor values
@@ -506,29 +485,28 @@ class AutoRunFrame:
             self.root.after_cancel(self.after_id_auto_range)
         self.after_id_auto_range = None
 
-    def stop_measurement(self):
+    def abort_measurement(self):
         """ Abort the measurement process.
 
         :return: None
         """
-
         # ask user for confirmation
-        if tk.messagebox.askokcancel("Abort measurment", "Are you sure to abort the measurement?", parent=self.autorun_main_window):
-            # abort record process
-            if self.after_id_record is not None:
-                self.root.after_cancel(self.after_id_record)
-                self.after_id_record = None
-            # abort plot process
-            if self.after_id_plot is not None:
-                self.root.after_cancel(self.after_id_plot)
-                self.after_id_plot = None
-            # abort auto range process
-            if self.after_id_auto_range is not None:
-                self.root.after_cancel(self.after_id_auto_range)
-                self.after_id_auto_range = None
-
+        if tk.messagebox.askokcancel("Abort measurment", "Are you sure to abort the measurement?",
+                                     parent=self.autorun_main_window):
+            # finish processes
+            self.finish_all_processes()
             # inform user
             tk.messagebox.showinfo("Information", "Measurement aborted", parent=self.autorun_main_window)
+
+    def stop_measurement(self):
+        """ Stops the measurement routine.
+
+        :return: None
+        """
+        # cnacel the after task given by id
+        if self.after_id_measurement is not None:
+            self.root.after_cancel(self.after_id_measurement)
+        self.after_id_measurement = None
 
     def switch_hv(self):
         """ Switch to high voltage in manual mode
@@ -539,6 +517,18 @@ class AutoRunFrame:
         if self.after_id_record is None:
             if not tk.messagebox.askokcancel("Information", "Recording is not in progress. \nContinue anyway?", parent=self.autorun_main_window):
                 return
+
+        # select appropriate measurement range
+        self.electrometer.set_range(5)
+        time.sleep(0.5)
+
+        # set voltage
+        if self.source_dropdown_result == 0:
+            self.hvamp.set_voltage(int(self.voltage_result))
+        elif self.source_dropdown_result == 1:
+            self.electrometer.enable_source_output()
+            time.sleep(0.1)
+            self.electrometer.set_voltage(int(self.voltage_result))
 
         # switch relays
         self.relays.switch_relay("GND", "OFF", self.labjack)
@@ -553,6 +543,14 @@ class AutoRunFrame:
         if self.after_id_record is None:
             if not tk.messagebox.askokcancel("Information", "Recording is not in progress. \nContinue anyway?", parent=self.autorun_main_window):
                 return
+
+        # reset voltage
+        self.electrometer.set_voltage(0)
+        self.hvamp.set_voltage(0)
+
+        # select appropriate measurement range
+        self.electrometer.set_range(5)
+        time.sleep(0.5)
 
         # switch relays
         self.relays.switch_relay("HV", "OFF", self.labjack)
@@ -613,10 +611,10 @@ class AutoRunFrame:
         else:
             self.overflow_flag = False
 
-        # switch to lower range if two measurement values in a row are below next lower range
+        # switch to lower range if two measurement values in a row are below half of the next lower range
         print("Current value", self.values[1])
         print("Range value", ranges_in_p[self.electrometer.range - 1])
-        if abs(self.values[1]) < ranges_in_p[self.electrometer.range - 2] and self.electrometer.range > 1 and not self.values[1] == 0 and not self.values[1] == -1:
+        if abs(self.values[1]) < ranges_in_p[self.electrometer.range - 2]/2 and self.electrometer.range > 1 and not self.values[1] == 0 and not self.values[1] == -1:
             if self.switch_lower_flag:
                 self.electrometer.set_range(self.electrometer.range - 1)
                 self.switch_lower_flag = False
@@ -625,16 +623,17 @@ class AutoRunFrame:
         else:
             self.switch_lower_flag = False
 
-        if self.t_start is not None:
+        # execute only if recording is in progress and not manual mode is selected
+        if self.t_start is not None and self.type_dropdown != 2:
             time_since_start = time.time() - int(self.t_start)
             # switch to 20 nA range shortly before time step one
-            if 1 > int(self.t_one_result) - time_since_start > 0 and self.t_one_result is not None:
+            if 3 > int(self.t_one_result) - time_since_start > 0 and self.t_one_result is not None:
                 print("TIME CONDITION FULLWILD one")
                 self.electrometer.set_range(5)
                 self.switch_lower_flag = False
 
             # switch to 20 nA range shortly before time step two
-            elif 1 > int(self.t_one_result) + int(self.t_two_result) - time_since_start > 0 and self.t_two_result is not None:
+            elif 3 > int(self.t_one_result) + int(self.t_two_result) - time_since_start > 0 and self.t_two_result is not None:
                 print("TIME CONDITION FULLWILD two")
                 self.electrometer.set_range(5)
 
