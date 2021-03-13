@@ -194,8 +194,8 @@ class LabjackConnection:
             raise ValueError
 
         # Generate write statement. Even TDAC# is DACA, odd TDAC# is DACB
-        # Labjack doc: For instance, if LJTick-DAC is connected to FIO2/FIO3 block on main device:
-        # TDAC2 corresponds with DACA, and TDAC3 corresponds with DACB.
+        # Labjack doc: For instance, if LJTick-DAC is connected to FIO6/FIO7 block on main device:
+        # TDAC6 corresponds with DACA, and TDAC7 corresponds with DACB.
         if port == "A":
             write = str("TDAC" + str(Parameters.LJ_TICK_DAC_DOUT_SCL))
         elif port == "B":

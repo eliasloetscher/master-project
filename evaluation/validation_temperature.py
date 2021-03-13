@@ -37,7 +37,11 @@ def read_csv(file):
     # extract data
     with open(file) as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',', quotechar=',')
+        i = 0
         for row in spamreader:
+            i += 1
+            if i < 4:
+                continue
             time.append(row[0])
             time_absolute.append(row[1])
             temp_row_one.append(row[2])
@@ -216,13 +220,13 @@ def create_lookup_plot():
 
     # create plot
     plt.rcParams["font.family"] = "Times New Roman"
-    plt.title("Control temperature deviation")
+    # plt.title("Control temperature deviation")
     plt.plot(x, func_surface, "r")
     plt.plot(x, func_air, "b")
     plt.plot(x, func_electrode, "g")
-    plt.scatter(temp_points, delta_surface, c='None', edgecolors="red", marker='o', label="Surface")
-    plt.scatter(temp_points, delta_air, c='None', edgecolors="blue", marker='^', label="Air")
-    plt.scatter(temp_points, delta_electrode, c='None', edgecolors="green", marker='d', label="Electrode")
+    plt.scatter(temp_points, delta_surface, c='None', edgecolors="red", marker='o', label="Inner surface of test cell")
+    plt.scatter(temp_points, delta_air, c='None', edgecolors="blue", marker='^', label="Air at medium height")
+    plt.scatter(temp_points, delta_electrode, c='None', edgecolors="green", marker='d', label="Between the electrodes")
     plt.xlabel("Control temperature in °C")
     plt.ylabel("Temperature drop in °C")
     plt.legend(loc="lower right")
@@ -231,8 +235,77 @@ def create_lookup_plot():
     plt.show()
 
 
+def plot(x_list, y_list, save_name):
+
+    # create plot
+    plt.rcParams["font.family"] = "Times New Roman"
+    # plt.title("Control temperature deviation")
+    plt.plot(x_list, y_list[1], "r", mfc='None', marker='o', markevery=500, label="Inner surface of test cell")
+    plt.plot(x_list, y_list[0], "b", mfc='None', marker='^', markevery=500, label="Air at medium height")
+    plt.plot(x_list, y_list[2], "g", mfc='None', marker='d', markevery=500, label="Between the electrodes")
+    plt.xlabel("Time in h")
+    plt.ylabel("Temperature in °C")
+    plt.legend(loc="lower right")
+    plt.grid()
+    plt.savefig(save_name, dpi=300)
+    plt.show()
+
+
+def plot_every_measurement():
+
+    safe_names = ["temp_30", "temp_55", "temp_80", "temp_105", "temp_130"]
+    for i in range(5):
+
+        # get csv results
+        result = read_csv(FILE_LOCATIONS[i])
+
+        # match to temps
+        sensors = SENSORS[i]
+        temp_surface = result[sensors[0] + 1]
+        temp_air = result[sensors[1] + 1]
+        temp_electrode = result[sensors[2] + 1]
+
+        total_time_in_h = len(temp_surface)*10/3600
+        x_points = []
+        for m in range(len(temp_air)):
+            time_point_in_hours = round(total_time_in_h/len(temp_air)*m,3)
+            if time_point_in_hours < 15:
+                x_points.append(time_point_in_hours)
+
+        temp_surface = temp_surface[0:len(x_points)]
+        temp_air = temp_air[0:len(x_points)]
+        temp_electrode = temp_electrode[0:len(x_points)]
+
+        surface_float = []
+        for element in temp_surface:
+            if i == 3:
+                surface_float.append(float(element[2:len(element) - 2]))
+                continue
+            surface_float.append(float(element[1:len(element) - 1]))
+
+        air_float = []
+        for element in temp_air:
+            if i == 3:
+                air_float.append(float(element[2:len(element) - 2]))
+                continue
+            air_float.append(float(element[1:len(element) - 1]))
+
+        electrode_float = []
+        for element in temp_electrode:
+            if i == 3:
+                electrode_float.append(float(element[2:len(element) - 2]))
+                continue
+            electrode_float.append(float(element[1:len(element) - 1]))
+
+        print(x_points)
+        print(temp_air)
+
+        plot(x_points, [air_float, surface_float, electrode_float], safe_names[i])
+
+
 # Uncomment the desired action to be executed:
 
-# create_lookup_plot()
+create_lookup_plot()
 # steady_state_evaluation()
 # control_temp_delta_evaluation()
+# plot_every_measurement()
